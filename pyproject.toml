@@ -1,0 +1,100 @@
+[project]
+name = "splunkology"
+version = "0.1.0"
+description = "Autonomous DFIR agent for SANS SIFT Workstation. Typed MCP server with architectural evidence integrity."
+requires-python = ">=3.11"
+authors = [{name = "Nafees"}]
+license = {text = "MIT"}
+readme = "README.md"
+dependencies = [
+    "mcp>=1.2.0",
+    "anthropic>=0.40.0",
+    "pydantic>=2.9.0",
+    "pydantic-settings>=2.6.0",
+    "sqlmodel>=0.0.22",
+    "rich>=13.9.0",
+    "typer>=0.13.0",
+    "structlog>=24.4.0",
+    "httpx>=0.27.0",
+    "fastapi>=0.115.0",
+    "uvicorn>=0.30.0",
+    "python-dotenv>=1.0.0",
+    "langgraph>=0.2.0",
+    "langchain-core>=0.3.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=8.3.0",
+    "pytest-asyncio>=0.24.0",
+    "pytest-cov>=6.0.0",
+    "ruff==0.15.13",
+    "mypy==2.1.0",
+    "matplotlib>=3.9.0",
+    "numpy>=1.26.0",
+    "ipython>=8.0.0",
+]
+
+[project.scripts]
+splunkology = "splunkology.cli.main:app"
+splunkology-mcp = "splunkology.mcp_server.server:main"
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "A", "C4", "SIM", "RET"]
+ignore = [
+    "E402",   # load_dotenv() before imports; fix in T20
+    "E501",   # line too long; fix in T20
+    "N806",   # local var uppercase; cosmetic
+    "N818",   # exception name suffix; cosmetic
+    "B905",   # zip() without strict=; fix in T20
+    "B007",   # unused loop var; cosmetic
+    "B904",   # raise from in except; fix in T20
+    "B017",   # blind exception in pytest.raises; intentional
+    "C408",   # dict() literal style; cosmetic
+    "C416",   # dict comprehension; cosmetic
+    "F401",   # unused import residual; T20
+    "F601",   # repeated dict key; intentional aliases
+    "F821",   # undefined name; fix in T20
+    "F841",   # unused local var; cosmetic
+    "SIM105", # contextlib.suppress; cosmetic
+    "SIM108", # ternary operator; cosmetic
+    "SIM115", # context manager for open; cosmetic
+    "UP042",  # StrEnum migration; fix in T20
+]
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/splunkology"]
+
+[tool.coverage.run]
+source = ["src/splunkology"]
+omit = ["*/__init__.py"]
+
+[tool.coverage.report]
+fail_under = 38
+show_missing = true
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_return_any = true
+warn_unused_ignores = true
+no_implicit_optional = true
+
+[[tool.mypy.overrides]]
+module = "splunkology.dashboard.app"
+ignore_errors = true
+
+[[tool.mypy.overrides]]
+module = "splunkology.orchestrators.langgraph_adapter"
+ignore_errors = true

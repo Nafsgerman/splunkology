@@ -1,0 +1,11 @@
+[mcp_servers.splunkology]
+args = [
+    "-m",
+    "splunkology.mcp_server.server",
+]
+command = "python3"
+
+[mcp_servers.splunkology.env]
+SIFTGUARD_AUDIT_DB = "/cases/TEST-001/splunkology/audit/CASE-001.db"
+SIFTGUARD_CACHE_DIR = "/cases/TEST-001/splunkology_cache"
+SIFTGUARD_CASE_ID = "TEST-001"

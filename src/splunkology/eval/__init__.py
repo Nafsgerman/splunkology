@@ -1,0 +1,37 @@
+"""Splunkology evaluation framework — agent-agnostic trace-based evaluation."""
+
+from splunkology.eval.trace import (
+    SCHEMA_VERSION,
+    CorrectionEvent,
+    ExperimentConfig,
+    Finding,
+    FindingType,
+    HypothesisEvent,
+    HypothesisEventType,
+    IterationSnapshot,
+    Orchestrator,
+    TerminatedReason,
+    ToolCall,
+    Trace,
+    TraceMeta,
+    UsageTotals,
+    Verdict,
+)
+
+__all__ = [
+    "SCHEMA_VERSION",
+    "CorrectionEvent",
+    "ExperimentConfig",
+    "Finding",
+    "FindingType",
+    "HypothesisEvent",
+    "HypothesisEventType",
+    "IterationSnapshot",
+    "Orchestrator",
+    "TerminatedReason",
+    "ToolCall",
+    "Trace",
+    "TraceMeta",
+    "UsageTotals",
+    "Verdict",
+]

@@ -1,0 +1,43 @@
+{
+  "case_id": "TEST-002",
+  "version": "1.1.0",
+  "description": "NIST CFReDS Hacking Case — Greg Schardt (Mr. Evil), Windows XP disk image",
+  "source": "NIST CFReDS + direct disk mount at offset 63*512",
+  "iocs": [
+    {
+      "ioc_id": "file-001",
+      "ioc_type": "file",
+      "value": "netstumbler",
+      "evidence_location": ["list_files", "windows_mftscan"],
+      "description": "Network Stumbler war-driving tool — shortcut confirmed at Mr. Evil desktop"
+    },
+    {
+      "ioc_id": "file-002",
+      "ioc_type": "file",
+      "value": "ethereal",
+      "evidence_location": ["list_files", "windows_mftscan"],
+      "description": "Ethereal packet capture tool — installed, shortcuts confirmed"
+    },
+    {
+      "ioc_id": "file-003",
+      "ioc_type": "file",
+      "value": "pwdump",
+      "evidence_location": ["list_files", "windows_mftscan"],
+      "description": "Password dumper — pwdump.exe + pwdump2.exe found in My Documents/COMMANDS"
+    },
+    {
+      "ioc_id": "file-004",
+      "ioc_type": "file",
+      "value": "netcat",
+      "evidence_location": ["list_files", "windows_mftscan"],
+      "description": "Netcat found in My Documents/EXPLOITATION/NT/Netcat"
+    },
+    {
+      "ioc_id": "user-001",
+      "ioc_type": "user",
+      "value": "mr. evil",
+      "evidence_location": ["list_files", "windows_registry_printkey"],
+      "description": "Username confirmed — Documents and Settings/Mr. Evil profile"
+    }
+  ]
+}
