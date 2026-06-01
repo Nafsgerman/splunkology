@@ -1,144 +1,59 @@
+"""MCP server — Splunk tool surface.
+
+Tools exposed to the agent loop:
+  splunk_search      — run SPL, return events
+  splunk_indexes     — list available indexes
+  splunk_server_info — version/host check
+"""
 from __future__ import annotations
 
 import asyncio
+import os
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
 from mcp.types import TextContent, Tool
 
-from splunkology.mcp_server.tools.filesystem import extract_file, list_files
-from splunkology.mcp_server.tools.mft import analyze_mft
-from splunkology.mcp_server.tools.registry import (
-    run_regripper,
-)
-from splunkology.mcp_server.tools.timeline import create_supertimeline, sort_timeline
-from splunkology.mcp_server.tools.volatility import vol_malfind, vol_netscan, vol_pslist
+from splunkology.splunk.client import SplunkClient
 
 app = Server("splunkology-mcp")
 
+def _client() -> SplunkClient:
+    return SplunkClient(
+        base_url=os.environ.get("SPLUNK_URL", "https://localhost:8089"),
+        username=os.environ.get("SPLUNK_USER", "admin"),
+        password=os.environ.get("SPLUNK_PASS", "SplunkAdmin1!"),
+    )
+
+
 TOOLS = [
     Tool(
-        name="analyze_mft",
-        description="Parse Windows $MFT. Returns typed entries with timestomp flags. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "memory_image": {"type": "string"},
-                "timestomp_only": {"type": "boolean", "default": False},
-            },
-            "required": ["memory_image"],
-        },
-    ),
-    Tool(
-        name="vol_pslist",
-        description="List processes from memory image. Flags suspicious names and parent-child combos. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
-    ),
-    Tool(
-        name="vol_netscan",
-        description="Scan memory image for network connections. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
-    ),
-    Tool(
-        name="vol_malfind",
-        description="Find injected code and suspicious memory regions. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
-    ),
-    Tool(
-        name="create_supertimeline",
-        description="Run log2timeline to build a plaso supertimeline from evidence. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "evidence_path": {"type": "string"},
-                "output_plaso": {"type": "string", "default": "/tmp/splunkology_timeline.plaso"},
-            },
-            "required": ["evidence_path"],
-        },
-    ),
-    Tool(
-        name="sort_timeline",
-        description="Run psort to produce a sorted CSV timeline from a plaso file. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "plaso_file": {"type": "string"},
-                "output_csv": {"type": "string", "default": "/tmp/splunkology_sorted.csv"},
-                "filter_date_start": {"type": "string"},
-            },
-            "required": ["plaso_file"],
-        },
-    ),
-    Tool(
-        name="run_regripper",
+        name="splunk_search",
         description=(
-            "Run a regripper plugin against a registry hive. Approved plugins: "
-            "autoruns, services, run, userassist, shellbags, recentdocs, "
-            "networklist, timezone, samparse. READ-ONLY."
+            "Run a SPL search against Splunk. Returns up to 1000 events. "
+            "Use for BOTS triage: hunt IOCs, correlate events, build SPL evidence chains."
         ),
         inputSchema={
             "type": "object",
             "properties": {
-                "hive_path": {"type": "string"},
-                "plugin": {"type": "string", "default": "autoruns"},
+                "spl": {"type": "string", "description": "SPL query (without leading 'search')"},
+                "earliest": {"type": "string", "default": "-24h"},
+                "latest": {"type": "string", "default": "now"},
             },
-            "required": ["hive_path"],
+            "required": ["spl"],
         },
     ),
     Tool(
-        name="list_files",
-        description="List files in a disk image using fls (TSK). Recovers deleted files. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "image_path": {"type": "string"},
-                "offset": {"type": "string", "default": ""},
-                "recursive": {"type": "boolean", "default": True},
-            },
-            "required": ["image_path"],
-        },
+        name="splunk_indexes",
+        description="List all Splunk indexes with event counts and time ranges.",
+        inputSchema={"type": "object", "properties": {}},
     ),
     Tool(
-        name="extract_file",
-        description="Extract a file from a disk image by inode using icat. READ-ONLY.",
-        inputSchema={
-            "type": "object",
-            "properties": {
-                "image_path": {"type": "string"},
-                "inode": {"type": "string"},
-                "output_path": {"type": "string"},
-                "offset": {"type": "string", "default": ""},
-            },
-            "required": ["image_path", "inode", "output_path"],
-        },
+        name="splunk_server_info",
+        description="Return Splunk version, build, and host info.",
+        inputSchema={"type": "object", "properties": {}},
     ),
 ]
-
-DISPATCH = {
-    "analyze_mft": lambda a: analyze_mft(
-        **{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}
-    ),
-    "vol_pslist": lambda a: vol_pslist(**a),
-    "vol_netscan": lambda a: vol_netscan(**a),
-    "vol_malfind": lambda a: vol_malfind(**a),
-    "create_supertimeline": lambda a: create_supertimeline(**a),
-    "sort_timeline": lambda a: sort_timeline(**a),
-    "run_regripper": lambda a: run_regripper(**a),
-    "list_files": lambda a: list_files(**a),
-    "extract_file": lambda a: extract_file(**a),
-}
 
 
 @app.list_tools()
@@ -148,11 +63,36 @@ async def list_tools() -> list[Tool]:
 
 @app.call_tool()
 async def call_tool(name: str, arguments: dict) -> list[TextContent]:
-    handler = DISPATCH.get(name)
-    if not handler:
-        raise ValueError(f"unknown tool: {name}")
-    result = await handler(arguments)
-    return [TextContent(type="text", text=result.model_dump_json(indent=2))]
+    client = _client()
+
+    if name == "splunk_search":
+        result = client.search(
+            spl=arguments["spl"],
+            earliest=arguments.get("earliest", "-24h"),
+            latest=arguments.get("latest", "now"),
+        )
+        import json
+        payload = {
+            "job_id": result.job_id,
+            "event_count": result.event_count,
+            "duration_ms": result.duration_ms,
+            "events": result.events,
+        }
+        return [TextContent(type="text", text=json.dumps(payload, indent=2))]
+
+    if name == "splunk_indexes":
+        indexes = client.list_indexes()
+        import json
+        return [TextContent(type="text", text=json.dumps(
+            [vars(i) for i in indexes], indent=2
+        ))]
+
+    if name == "splunk_server_info":
+        info = client.server_info()
+        import json
+        return [TextContent(type="text", text=json.dumps(vars(info), indent=2))]
+
+    raise ValueError(f"unknown tool: {name}")
 
 
 def main() -> None:
