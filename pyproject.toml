@@ -1,7 +1,7 @@
 [project]
 name = "splunkology"
 version = "0.1.0"
-description = "Autonomous DFIR agent for SANS SIFT Workstation. Typed MCP server with architectural evidence integrity."
+description = "Autonomous SOC triage agent for Splunk. Typed MCP server with architectural evidence integrity."
 requires-python = ">=3.11"
 authors = [{name = "Nafees"}]
 license = {text = "MIT"}
