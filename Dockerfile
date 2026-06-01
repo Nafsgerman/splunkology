@@ -43,9 +43,9 @@ EXPOSE 8080
 HEALTHCHECK --interval=5s --timeout=3s --start-period=15s --retries=6 \
     CMD curl -f http://localhost:8080/ || exit 1
 
-USER siftguard
+USER splunkology
 
 ENV PYTHONPATH=/app/src
 
-CMD ["uvicorn", "siftguard.dashboard.app:app", \
+CMD ["uvicorn", "splunkology.dashboard.app:app", \
      "--host", "0.0.0.0", "--port", "8080"]

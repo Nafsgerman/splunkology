@@ -1,16 +1,96 @@
 # Splunkology Tool Catalog
 
-Auto-generated from `src/splunkology/mcp_server/server.py`. Do not edit manually.
-Run `python scripts/generate_tool_catalog.py` to regenerate.
+> Auto-generated from `src/splunkology/mcp_server/server.py`.
+> Do **not** edit manually — run `make tool-catalog` to regenerate.
 
-| Tool | Description | Required Parameters | Optional Parameters |
-|------|-------------|---------------------|---------------------|
-| `analyze_mft` | Parse Windows $MFT. Returns typed entries with timestomp flags. READ-ONLY. | `memory_image` (string) | `timestomp_only` (boolean) |
-| `vol_pslist` | List processes from memory image. Flags suspicious names and parent-child combos. READ-ONLY. | `memory_image` (string) | — |
-| `vol_netscan` | Scan memory image for network connections. READ-ONLY. | `memory_image` (string) | — |
-| `vol_malfind` | Find injected code and suspicious memory regions. READ-ONLY. | `memory_image` (string) | — |
-| `create_supertimeline` | Run log2timeline to build a plaso supertimeline from evidence. READ-ONLY. | `evidence_path` (string) | `output_plaso` (string) |
-| `sort_timeline` | Run psort to produce a sorted CSV timeline from a plaso file. READ-ONLY. | `plaso_file` (string) | `output_csv` (string), `filter_date_start` (string) |
-| `run_regripper` | Run a regripper plugin against a registry hive. Approved plugins: autoruns, services, run, userassist, shellbags, recentdocs, networklist, timezone, samparse. READ-ONLY. | `hive_path` (string) | `plugin` (string) |
-| `list_files` | List files in a disk image using fls (TSK). Recovers deleted files. READ-ONLY. | `image_path` (string) | `offset` (string), `recursive` (boolean) |
-| `extract_file` | Extract a file from a disk image by inode using icat. READ-ONLY. | `image_path` (string), `inode` (string), `output_path` (string) | `offset` (string) |
+**3 forensic tools registered.** All tools are READ-ONLY.
+Evidence integrity is enforced architecturally — destructive operations do not exist.
+
+## Index
+
+- [`splunk_search`](#splunk-search)
+- [`splunk_indexes`](#splunk-indexes)
+- [`splunk_server_info`](#splunk-server-info)
+
+---
+
+## splunk_search
+
+**Description:** Run a SPL search against Splunk. Returns up to 1000 events. Use for BOTS triage: hunt IOCs, correlate events, build SPL evidence chains.
+
+### Input Schema
+
+| Parameter | Type | Required | Default | Notes |
+|-----------|------|:--------:|---------|-------|
+| `spl` | `string` | ✓ |  | SPL query (without leading 'search') |
+| `earliest` | `string` |  | `-24h` |  |
+| `latest` | `string` |  | `now` |  |
+
+
+### Output
+
+Returns [`SocResult`](../src/splunkology/models/soc.py) serialized as JSON.
+Key fields: `tool` · `findings` · `evidence_refs` · `duration_ms` · `outcome` (`ok` | `partial` | `fail`)
+
+### Example Invocation
+
+```json
+{
+  "tool": "splunk_search",
+  "arguments": {
+    "spl": "<spl>"
+  }
+}
+```
+
+---
+
+## splunk_indexes
+
+**Description:** List all Splunk indexes with event counts and time ranges.
+
+### Input Schema
+
+_No inputs._
+
+
+### Output
+
+Returns [`SocResult`](../src/splunkology/models/soc.py) serialized as JSON.
+Key fields: `tool` · `findings` · `evidence_refs` · `duration_ms` · `outcome` (`ok` | `partial` | `fail`)
+
+### Example Invocation
+
+```json
+{
+  "tool": "splunk_indexes",
+  "arguments": {}
+}
+```
+
+---
+
+## splunk_server_info
+
+**Description:** Return Splunk version, build, and host info.
+
+### Input Schema
+
+_No inputs._
+
+
+### Output
+
+Returns [`SocResult`](../src/splunkology/models/soc.py) serialized as JSON.
+Key fields: `tool` · `findings` · `evidence_refs` · `duration_ms` · `outcome` (`ok` | `partial` | `fail`)
+
+### Example Invocation
+
+```json
+{
+  "tool": "splunk_server_info",
+  "arguments": {}
+}
+```
+
+---

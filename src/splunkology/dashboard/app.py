@@ -16,7 +16,7 @@ from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import HTMLResponse, Response, StreamingResponse
 
-from splunkology.cases.loader import get_case, list_case_ids
+from splunkology.incidents.loader import get_case, list_case_ids
 
 load_dotenv(Path(__file__).resolve().parents[4] / ".env")
 

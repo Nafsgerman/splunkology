@@ -70,7 +70,7 @@ def test_comparison_available_cases_present():
     client = TestClient(app)
     data = client.get("/api/orchestrator-comparison/CASE-001").json()
     assert "available_cases" in data
-    assert "TEST-001" in data["available_cases"]
+    assert "bots_apt" in data["available_cases"]
 
 
 def test_comparison_row_shape():

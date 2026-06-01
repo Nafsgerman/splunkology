@@ -43,12 +43,8 @@ from splunkology.agent.output_validator import (
 )
 from splunkology.agent.prompts import load_prompt
 from splunkology.audit.log import AuditLog
-from splunkology.mcp_server.tools.filesystem import extract_file, list_files
-from splunkology.mcp_server.tools.mft import analyze_mft
-from splunkology.mcp_server.tools.registry import run_regripper
-from splunkology.mcp_server.tools.timeline import create_supertimeline, sort_timeline
-from splunkology.mcp_server.tools.volatility import vol_malfind, vol_netscan, vol_pslist
-from splunkology.models.forensic import ForensicResult, ToolOutcome
+from splunkology.models.soc import SocResult as ForensicResult, ToolOutcome
+from splunkology.splunk.client import SplunkClient
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -59,122 +55,34 @@ DEFAULT_MODEL = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
 TOOL_REGISTRY = {
-    "analyze_mft": lambda **a: analyze_mft(
-        **{**a, "memory_image": a.get("memory_image") or a.get("mft_path", "")}
-    ),
-    "vol_pslist": vol_pslist,
-    "vol_netscan": vol_netscan,
-    "vol_malfind": vol_malfind,
-    "create_supertimeline": create_supertimeline,
-    "sort_timeline": sort_timeline,
-    "run_regripper": run_regripper,
-    "list_files": list_files,
-    "extract_file": extract_file,
+    "splunk_search": None,   # dispatched via SplunkClient directly
+    "splunk_indexes": None,
+    "splunk_server_info": None,
 }
 
 TOOL_SCHEMAS = [
     {
-        "name": "analyze_mft",
-        "description": "Parse Windows $MFT entries directly from a memory image via Volatility3. READ-ONLY.",
+        "name": "splunk_search",
+        "description": "Run SPL search against Splunk. Returns up to 1000 events. Use for BOTS triage.",
         "input_schema": {
             "type": "object",
             "properties": {
-                "memory_image": {"type": "string"},
-                "timestomp_only": {"type": "boolean", "default": False},
+                "spl": {"type": "string"},
+                "earliest": {"type": "string", "default": "-24h"},
+                "latest": {"type": "string", "default": "now"},
             },
-            "required": ["memory_image"],
+            "required": ["spl"],
         },
     },
     {
-        "name": "vol_pslist",
-        "description": "List processes from memory image. Flags suspicious names/parent-child combos. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
+        "name": "splunk_indexes",
+        "description": "List all Splunk indexes with event counts and time ranges.",
+        "input_schema": {"type": "object", "properties": {}},
     },
     {
-        "name": "vol_netscan",
-        "description": "Scan memory image for network connections. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
-    },
-    {
-        "name": "vol_malfind",
-        "description": "Find injected code and suspicious memory regions. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {"memory_image": {"type": "string"}},
-            "required": ["memory_image"],
-        },
-    },
-    {
-        "name": "create_supertimeline",
-        "description": "Run log2timeline to build a plaso supertimeline. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "evidence_path": {"type": "string"},
-                "output_plaso": {"type": "string", "default": "/tmp/splunkology_timeline.plaso"},
-            },
-            "required": ["evidence_path"],
-        },
-    },
-    {
-        "name": "sort_timeline",
-        "description": "Run psort to produce sorted CSV timeline from plaso file. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "plaso_file": {"type": "string"},
-                "output_csv": {"type": "string", "default": "/tmp/splunkology_sorted.csv"},
-                "filter_date_start": {"type": "string"},
-            },
-            "required": ["plaso_file"],
-        },
-    },
-    {
-        "name": "run_regripper",
-        "description": "Run regripper plugin against registry hive. Plugins: autoruns,services,run,userassist,shellbags,recentdocs,networklist,timezone,samparse. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "hive_path": {"type": "string"},
-                "plugin": {"type": "string", "default": "autoruns"},
-            },
-            "required": ["hive_path"],
-        },
-    },
-    {
-        "name": "list_files",
-        "description": "List files in disk image using fls. Recovers deleted files. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "image_path": {"type": "string"},
-                "offset": {"type": "string", "default": ""},
-                "recursive": {"type": "boolean", "default": True},
-            },
-            "required": ["image_path"],
-        },
-    },
-    {
-        "name": "extract_file",
-        "description": "Extract file from disk image by inode using icat. READ-ONLY.",
-        "input_schema": {
-            "type": "object",
-            "properties": {
-                "image_path": {"type": "string"},
-                "inode": {"type": "string"},
-                "output_path": {"type": "string"},
-                "offset": {"type": "string", "default": ""},
-            },
-            "required": ["image_path", "inode", "output_path"],
-        },
+        "name": "splunk_server_info",
+        "description": "Return Splunk version, build, and host info.",
+        "input_schema": {"type": "object", "properties": {}},
     },
 ]
 
@@ -197,8 +105,41 @@ class V2RunState:
 
 
 async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
-    fn = TOOL_REGISTRY.get(name)
-    if not fn:
+    import time
+    t0 = time.monotonic()
+    client = SplunkClient()
+    try:
+        if name == "splunk_search":
+            result = client.search(
+                spl=args["spl"],
+                earliest=args.get("earliest", "-24h"),
+                latest=args.get("latest", "now"),
+            )
+            return ForensicResult(
+                tool=name,
+                outcome=ToolOutcome.OK,
+                summary=f"{result.event_count} events in {result.duration_ms}ms",
+                duration_ms=result.duration_ms,
+                raw={"events": result.events, "job_id": result.job_id},
+            )
+        if name == "splunk_indexes":
+            indexes = client.list_indexes()
+            return ForensicResult(
+                tool=name,
+                outcome=ToolOutcome.OK,
+                summary=f"{len(indexes)} indexes",
+                duration_ms=int((time.monotonic() - t0) * 1000),
+                raw={"indexes": [vars(i) for i in indexes]},
+            )
+        if name == "splunk_server_info":
+            info = client.server_info()
+            return ForensicResult(
+                tool=name,
+                outcome=ToolOutcome.OK,
+                summary=f"Splunk {info.version}",
+                duration_ms=int((time.monotonic() - t0) * 1000),
+                raw=vars(info),
+            )
         return ForensicResult(
             tool=name,
             outcome=ToolOutcome.FAIL,
@@ -206,7 +147,14 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             duration_ms=0,
             error="tool not found in registry",
         )
-    return await fn(**args)  # type: ignore[no-any-return, operator]
+    except Exception as exc:
+        return ForensicResult(
+            tool=name,
+            outcome=ToolOutcome.FAIL,
+            summary=str(exc),
+            duration_ms=int((time.monotonic() - t0) * 1000),
+            error=str(exc),
+        )
 
 
 def _extract_text_blocks(content: list) -> str:

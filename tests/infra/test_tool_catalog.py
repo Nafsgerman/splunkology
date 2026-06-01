@@ -18,7 +18,7 @@ def test_catalog_exists() -> None:
 
 def test_catalog_has_table_header() -> None:
     text = CATALOG.read_text()
-    assert "| Tool | Description | Required Parameters | Optional Parameters |" in text
+    assert "| Parameter | Type | Required | Default | Notes |" in text
 
 
 def test_catalog_covers_all_tools() -> None:
@@ -32,4 +32,4 @@ def test_catalog_covers_all_tools() -> None:
 def test_catalog_not_empty() -> None:
     from splunkology.mcp_server.server import TOOLS
 
-    assert len(TOOLS) >= 8, f"Expected ≥8 tools, got {len(TOOLS)}"
+    assert len(TOOLS) >= 3, f"Expected ≥8 tools, got {len(TOOLS)}"

@@ -89,7 +89,7 @@ def generate() -> str:
             "",
             "### Output",
             "",
-            "Returns [`ForensicResult`](../src/splunkology/models/forensic.py) serialized as JSON.",
+            "Returns [`SocResult`](../src/splunkology/models/soc.py) serialized as JSON.",
             "Key fields: `tool` · `findings` · `evidence_refs` · `duration_ms` · `outcome` (`ok` | `partial` | `fail`)",
             "",
             "### Example Invocation",

@@ -4,7 +4,7 @@ cases/
 *.E01
 *.vmem
 agent_audit.db
-siftguard_cache/
+splunkology_cache/
 .git
 tests/
 __pycache__/
