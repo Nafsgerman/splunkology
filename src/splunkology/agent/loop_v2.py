@@ -43,14 +43,14 @@ from splunkology.agent.output_validator import (
 )
 from splunkology.agent.prompts import load_prompt
 from splunkology.audit.log import AuditLog
-from splunkology.models.soc import SocResult as ForensicResult, ToolOutcome
+from splunkology.models.soc import SocResult, ToolOutcome
 from splunkology.splunk.client import SplunkClient
 
 logger = logging.getLogger(__name__)
 console = Console()
 
-MAX_ITERATIONS = int(os.environ.get("SIFTGUARD_MAX_AGENT_ITERATIONS", "15"))
-DEFAULT_MODEL = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
+MAX_ITERATIONS = int(os.environ.get("SPLUNKOLOGY_MAX_AGENT_ITERATIONS", "15"))
+DEFAULT_MODEL = os.environ.get("SPLUNKOLOGY_MODEL", "claude-sonnet-4-6")
 
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
@@ -104,7 +104,7 @@ class V2RunState:
     completed_iterations: int = 0
 
 
-async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
+async def _dispatch_tool(name: str, args: dict) -> SocResult:
     import time
     t0 = time.monotonic()
     client = SplunkClient()
@@ -115,7 +115,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
                 earliest=args.get("earliest", "-24h"),
                 latest=args.get("latest", "now"),
             )
-            return ForensicResult(
+            return SocResult(
                 tool=name,
                 outcome=ToolOutcome.OK,
                 summary=f"{result.event_count} events in {result.duration_ms}ms",
@@ -124,7 +124,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             )
         if name == "splunk_indexes":
             indexes = client.list_indexes()
-            return ForensicResult(
+            return SocResult(
                 tool=name,
                 outcome=ToolOutcome.OK,
                 summary=f"{len(indexes)} indexes",
@@ -133,14 +133,14 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             )
         if name == "splunk_server_info":
             info = client.server_info()
-            return ForensicResult(
+            return SocResult(
                 tool=name,
                 outcome=ToolOutcome.OK,
                 summary=f"Splunk {info.version}",
                 duration_ms=int((time.monotonic() - t0) * 1000),
                 raw=vars(info),
             )
-        return ForensicResult(
+        return SocResult(
             tool=name,
             outcome=ToolOutcome.FAIL,
             summary=f"unknown tool: {name}",
@@ -148,7 +148,7 @@ async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
             error="tool not found in registry",
         )
     except Exception as exc:
-        return ForensicResult(
+        return SocResult(
             tool=name,
             outcome=ToolOutcome.FAIL,
             summary=str(exc),
@@ -570,7 +570,7 @@ async def run_case_v2(
     return final_report, run_id
 
 
-def _print_result_summary(tool_name: str, result: ForensicResult) -> None:
+def _print_result_summary(tool_name: str, result: SocResult) -> None:
     color = "green" if result.outcome.value == "ok" else "red"
     console.print(f"  [{color}]✓ {tool_name}:[/{color}] {result.summary} ({result.duration_ms}ms)")
 

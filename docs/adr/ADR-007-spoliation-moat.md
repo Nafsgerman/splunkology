@@ -4,7 +4,7 @@
 |---|---|
 | Status | Accepted |
 | Date | 2026-05-19 |
-| Decision Owner | Nafees A. (Solution Architect, SIFTGuard) |
+| Decision Owner | Nafees A. (Solution Architect, Splunkology) |
 | Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-003 (Loop Instrumentation), ADR-006 (Multi-Orchestrator), ADR-009 (Scorer Source) |
 | Supersedes | None |
 | Tag at decision | v1.29.0-task24-devpost |
@@ -40,7 +40,7 @@ Options A–C all share a common defect: they move enforcement to a layer above 
 
 ## 3. Decision
 
-Evidence integrity in SIFTGuard rests on three layered controls, each enforced below the agent layer. The agent — and the orchestrator hosting it — cannot opt out of any of them.
+Evidence integrity in Splunkology rests on three layered controls, each enforced below the agent layer. The agent — and the orchestrator hosting it — cannot opt out of any of them.
 
 ### 3.1 Control 1 — Typed MCP Boundary
 
@@ -66,7 +66,7 @@ The agent's only write path into the audit DB is through `SnapshotWriter` (ADR-0
 
 ### 3.3 Control 3 — Content-Addressed Methodology
 
-Every report emitted by SIFTGuard is stamped with a methodology header:
+Every report emitted by Splunkology is stamped with a methodology header:
 methodology_version: 1.2.0
 methodology_sha256:  9c2e…b4f7
 tool_catalog_sha256: 4a8d…12cc
@@ -105,7 +105,7 @@ The suite runs on every push to `main` (T18 CI) and on every release-tag build (
 
 ### 5.1 Positive
 
-**The integrity claim becomes a property a reviewer can run, not a sentence in a brochure.** A judge, a forensic auditor, or a SOC architect evaluating SIFTGuard for production deployment can `make spoliation-suite` and read the result. The trust surface is the test suite plus the schema files; no other artifact in the repository is load-bearing for the claim.
+**The integrity claim becomes a property a reviewer can run, not a sentence in a brochure.** A judge, a forensic auditor, or a SOC architect evaluating Splunkology for production deployment can `make spoliation-suite` and read the result. The trust surface is the test suite plus the schema files; no other artifact in the repository is load-bearing for the claim.
 
 **The moat is orchestrator-agnostic.** None of the three controls depends on which of the five orchestrators (ADR-006) is in the loop. A LangGraph run, a Claude Code run, and a Native run all hit the same MCP boundary, write to the same append-only DB, and stamp the same methodology SHA. Changing the orchestrator changes none of the integrity properties — which is the precondition for the single-variable comparison ADR-006 depends on.
 
@@ -121,7 +121,7 @@ The suite runs on every push to `main` (T18 CI) and on every release-tag build (
 
 ### 5.3 Demands on Operators
 
-A deployment of SIFTGuard inherits three commitments:
+A deployment of Splunkology inherits three commitments:
 
 1. The audit DB is backed up before any retention action is taken; deletion is by file, not by SQL.
 2. The methodology file is treated as a release-controlled artifact, not a configuration knob.
@@ -135,7 +135,7 @@ These commitments are surfaced as preflight checks at service start and document
 
 **Q1 — Cross-case correlation.** The append-only DB is per-case. Cross-case IOC correlation (an attacker's C2 IP appearing in three unrelated cases) requires a query path across DBs that does not exist today. Adding it requires a read-only aggregation layer that respects per-case retention boundaries. Deferred.
 
-**Q2 — Hardware-rooted attestation.** The strongest form of evidence integrity binds the audit DB to a TPM-signed boot chain — a SOC can prove not only that the DB was append-only but that it ran on the hardware claimed. SIFTGuard does not do this today. The architecture does not preclude it; the audit DB schema includes an `attestation_chain` column reserved for the receipt format.
+**Q2 — Hardware-rooted attestation.** The strongest form of evidence integrity binds the audit DB to a TPM-signed boot chain — a SOC can prove not only that the DB was append-only but that it ran on the hardware claimed. Splunkology does not do this today. The architecture does not preclude it; the audit DB schema includes an `attestation_chain` column reserved for the receipt format.
 
 **Q3 — Long-term key rotation for methodology SHA verification.** The methodology SHA is verified at run-time against the file on disk. A long-running deployment has no key-management story for revoking a compromised methodology version. Deferred post-hackathon.
 

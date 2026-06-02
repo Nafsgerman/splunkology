@@ -1,4 +1,4 @@
-"""Prompt loader for SIFTGuard agent.
+"""Prompt loader for Splunkology agent.
 
 Versions:
   v1              — original free-form prompt (baseline, ablation reference)

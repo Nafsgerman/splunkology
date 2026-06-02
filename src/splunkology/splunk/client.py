@@ -13,6 +13,7 @@ from typing import Any
 
 import requests
 import urllib3
+import os
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -161,11 +162,15 @@ class SplunkClient:
         self,
         base_url: str = "https://localhost:8089",
         username: str = "admin",
-        password: str = "SplunkAdmin1!",
+        password: str | None = None,
         *,
         transport: _Transport | None = None,
     ) -> None:
-        self._t: _Transport = transport or _RestTransport(base_url, username, password)
+        if transport is None:
+            if password is None:
+                password = os.environ["SPLUNK_PASS"]  # fail loud if unset
+            transport = _RestTransport(base_url, username, password)
+        self._t: _Transport = transport
 
     # -- Core search ---------------------------------------------------------
 

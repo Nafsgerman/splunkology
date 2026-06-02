@@ -208,7 +208,7 @@ def test_config_defaults():
     c = _config()
     assert c.self_correction is True
     assert c.max_iterations == 15
-    assert c.orchestrator == Orchestrator.SIFTGUARD_NATIVE
+    assert c.orchestrator == Orchestrator.SPLUNKOLOGY_NATIVE
 
 
 def test_config_ablation_flags():

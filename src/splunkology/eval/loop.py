@@ -36,8 +36,8 @@ async def run_case(
     prompt_version="v2" or "v2_training" → v2 loop (instrumented)
     Default: v2
     """
-    _version = prompt_version or os.environ.get("SIFTGUARD_PROMPT_VERSION", "v2")
-    _model = model or os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
+    _version = prompt_version or os.environ.get("SPLUNKOLOGY_PROMPT_VERSION", "v2")
+    _model = model or os.environ.get("SPLUNKOLOGY_MODEL", "claude-sonnet-4-6")
 
     _orchestrator = (config_override or {}).get("orchestrator", "splunkology-native")
     if _orchestrator == "langgraph":

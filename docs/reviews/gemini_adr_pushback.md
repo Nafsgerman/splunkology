@@ -39,7 +39,7 @@ A more experienced architect would consider **OS-level confinement first**: run 
 
 3. Hostile reviewer question:
 
-"If I have shell access to the workstation after a run, can I mutate the SQLite audit DB or extracted output files without SIFTGuard detecting it on the next read?"
+"If I have shell access to the workstation after a run, can I mutate the SQLite audit DB or extracted output files without Splunkology detecting it on the next read?"
 
 4. Logical inconsistency:
 

@@ -1,4 +1,4 @@
-# SIFTGuard — Direct Dependencies
+# Splunkology — Direct Dependencies
 
 _Auto-generated from `pyproject.toml`. **Not the SBOM.** For the full supply-chain inventory see `sbom.spdx.json` (SPDX 2.3) or `sbom.cyclonedx.json` (CycloneDX 1.5) at repo root._
 

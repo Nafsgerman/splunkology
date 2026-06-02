@@ -76,7 +76,7 @@ async def safe_exec(
         if pat in cmdline:
             raise SafeExecError(f"denied pattern in command: {pat!r}")
 
-    evidence_root = Path(os.environ.get("SIFTGUARD_EVIDENCE_ROOT", "/cases")).resolve()
+    evidence_root = Path(os.environ.get("SPLUNKOLOGY_EVIDENCE_ROOT", "/cases")).resolve()
     safe_prefixes = ("/usr/", "/opt/", "/home/sansforensics/", "/tmp/", "/cases/")
     for a in args:
         if a.startswith("-"):

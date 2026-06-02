@@ -22,7 +22,7 @@ def _client() -> SplunkClient:
     return SplunkClient(
         base_url=os.environ.get("SPLUNK_URL", "https://localhost:8089"),
         username=os.environ.get("SPLUNK_USER", "admin"),
-        password=os.environ.get("SPLUNK_PASS", "SplunkAdmin1!"),
+        password=os.environ["SPLUNK_PASS"],
     )
 
 

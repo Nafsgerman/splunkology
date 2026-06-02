@@ -4,7 +4,7 @@
 |---|---|
 | Status | Accepted |
 | Date | 2026-05-06 |
-| Decision Owner | Nafees A. (Solution Architect, SIFTGuard) |
+| Decision Owner | Nafees A. (Solution Architect, Splunkology) |
 | Stakeholders | DFIR practitioners, enterprise security leadership, hackathon judges, future contributors |
 | Supersedes | — |
 | Superseded By | — |
@@ -14,7 +14,7 @@
 
 ## 1. Context
 
-SIFTGuard is an autonomous incident-response agent. It runs on the SANS SIFT
+Splunkology is an autonomous incident-response agent. It runs on the SANS SIFT
 Workstation, calls forensic tools through a typed MCP server, and produces
 incident reports with a complete append-only audit trail and provenance
 chain. Court-admissibility is out of scope for this hackathon release; see
@@ -35,7 +35,7 @@ this one project so that any agent making similar claims can be evaluated on
 the same axes.
 
 This ADR records the decision to build that evaluation methodology as a
-first-class, agent-agnostic component of SIFTGuard, rather than as a
+first-class, agent-agnostic component of Splunkology, rather than as a
 late-stage benchmark or a marketing artefact.
 
 ---
@@ -44,7 +44,7 @@ late-stage benchmark or a marketing artefact.
 
 Three concrete problems motivate this decision.
 
-**(1) Unfalsifiable claims weaken adoption.** A claim such as "SIFTGuard is
+**(1) Unfalsifiable claims weaken adoption.** A claim such as "Splunkology is
 self-correcting" is not actionable for a security buyer. They cannot tell
 whether self-correction adds value, costs tokens for no gain, or actively
 hurts accuracy on certain case types. Without an evaluation framework that
@@ -66,21 +66,21 @@ sequencing, self-correction, hypothesis revision, calibration of confidence,
 or cost-accuracy trade-offs. A new agentic system entering the field has no
 shared reference points to be measured against.
 
-If SIFTGuard ships without addressing these three problems, it competes on
+If Splunkology ships without addressing these three problems, it competes on
 narrative. If it ships with the methodology to address them, it raises the
 floor for every subsequent agent in the field — including agents that are not
-SIFTGuard.
+Splunkology.
 
 ---
 
 ## 3. Decision
 
 We adopt an Empirical Operating Characteristic (EOC) framework as a
-first-class component of SIFTGuard, with the following non-negotiable
+first-class component of Splunkology, with the following non-negotiable
 properties:
 
 1. **Agent-agnostic from line one.** The framework consumes a `Trace` data
-   structure, not SIFTGuard internals. Any agent — a competing custom MCP
+   structure, not Splunkology internals. Any agent — a competing custom MCP
    server, a multi-agent orchestrator, an agentic IDE workflow, a future
    commercial product — can implement a `to_trace()` adapter and be evaluated
    on the same axes.

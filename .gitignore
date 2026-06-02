@@ -19,3 +19,4 @@ src/siftguard/dashboard/tools/
 !experiments/analysis/**
 .claude/
 .env
+*.zip

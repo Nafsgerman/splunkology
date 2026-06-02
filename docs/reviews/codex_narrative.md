@@ -1,6 +1,6 @@
-# SIFTGuard Devpost Narrative Pressure-Test Review
+# Splunkology Devpost Narrative Pressure-Test Review
 
-This document contains a senior-level pressure-test of SIFTGuard's Devpost submission narrative (`SUBMISSION.md`) and Loom demo script (`loom_script.md`). It evaluates the accuracy of system claims against the repository code, reframes marketing language into rigorous engineering descriptions, suggests credible challenges to add, and exposes gaps in the Loom script demo flow.
+This document contains a senior-level pressure-test of Splunkology's Devpost submission narrative (`SUBMISSION.md`) and Loom demo script (`loom_script.md`). It evaluates the accuracy of system claims against the repository code, reframes marketing language into rigorous engineering descriptions, suggests credible challenges to add, and exposes gaps in the Loom script demo flow.
 
 ---
 
@@ -18,7 +18,7 @@ This document contains a senior-level pressure-test of SIFTGuard's Devpost submi
 
 ### Claim C: Zero Hallucinated Findings Proof
 * **Narrative Quote:** `"Zero hallucinated findings — every claim traces to an audit DB row."` (`SUBMISSION.md`, line 238)
-* **The Reality:** While every reported finding should map to a tool call ID, SIFTGuard does *not* actually enforce field-level provenance (proving the finding literal was extracted from the raw bytes of the tool response, as admitted in `LIMITATIONS.md`). The agent can still hallucinate an IP or a process name that coincidentally matches the ground truth.
+* **The Reality:** While every reported finding should map to a tool call ID, Splunkology does *not* actually enforce field-level provenance (proving the finding literal was extracted from the raw bytes of the tool response, as admitted in `LIMITATIONS.md`). The agent can still hallucinate an IP or a process name that coincidentally matches the ground truth.
 * **Remediation:** Downgrade the claim from "zero hallucinated findings" to "all reported findings are mapped to a specific tool execution ID in the audit trail to ensure traceability."
 
 ---
@@ -27,8 +27,8 @@ This document contains a senior-level pressure-test of SIFTGuard's Devpost submi
 
 ### marketing -> engineering reframes:
 
-1. **Quote:** `"The gap is real: adversaries move at machine speed. Defenders don't. SIFTGuard closes that gap."` (`SUBMISSION.md`, line 37)
-   * **Engineering Reframe:** *"SIFTGuard automates the correlation, sequencing, and analysis of memory and disk forensics on a SIFT Workstation, reducing triage latency from hours of manual CLI analysis to a 100-260s automated pipeline."*
+1. **Quote:** `"The gap is real: adversaries move at machine speed. Defenders don't. Splunkology closes that gap."` (`SUBMISSION.md`, line 37)
+   * **Engineering Reframe:** *"Splunkology automates the correlation, sequencing, and analysis of memory and disk forensics on a SIFT Workstation, reducing triage latency from hours of manual CLI analysis to a 100-260s automated pipeline."*
 2. **Quote:** `"Court-defensible by design — SBOM signed with Sigstore keyless; SLSA Level 3 build provenance"` (`SUBMISSION.md`, line 96)
    * **Engineering Reframe:** *"Ensures supply-chain integrity for the deployment VM image using Sigstore keyless signatures and SLSA Level 3 build verification, ensuring the virtual machine package is tamper-evident."*
 3. **Quote:** `"The system prompt is defense-in-depth. The architecture is the wall."` (`loom_script.md`, line 69)
@@ -38,7 +38,7 @@ This document contains a senior-level pressure-test of SIFTGuard's Devpost submi
 
 ## 3. Increasing the Credibility of the "Challenges" Section
 
-The current challenges list safe, easily resolved engineering blocks (e.g., matching schemas, dataset offsets). To maximize credibility, SIFTGuard should add a **real architectural challenge**:
+The current challenges list safe, easily resolved engineering blocks (e.g., matching schemas, dataset offsets). To maximize credibility, Splunkology should add a **real architectural challenge**:
 
 ### Hard Challenge to Add: SQLite Concurrency and Thread-Lock Contention
 > **Upstream API Non-Determinism and DB Write Contention:** Implementing a synchronous, per-iteration `SnapshotWriter` across five parallel orchestrators caused severe SQLite write locks (`SQLITE_BUSY` errors). Because SQLite locks the entire database file during writes, parallel benchmarking threads frequently blocked the forensic tool loops. Resolving this required implementing custom exponential-backoff sleep-retry loops at the database seam to guarantee that telemetry recording did not drop data or bottleneck the execution speeds.

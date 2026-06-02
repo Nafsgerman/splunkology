@@ -14,15 +14,15 @@ The strongest version of the objection:
 
 ## 2. Most Important Differentiator
 
-The single most important thing SIFTGuard does that a competing submission probably does not do is make the agent measurable across orchestration paradigms.
+The single most important thing Splunkology does that a competing submission probably does not do is make the agent measurable across orchestration paradigms.
 
-The five-orchestrator comparison is not just vendor theater. It gives judges a falsifiable matrix: same cases, same advertised tool surface, separate F1/cost/iteration outcomes, visible failure on TEST-002, and documented methodology. Most hackathon agent submissions show one impressive run. SIFTGuard shows the variance between agent architectures, including negative results. That is the strongest engineering contribution.
+The five-orchestrator comparison is not just vendor theater. It gives judges a falsifiable matrix: same cases, same advertised tool surface, separate F1/cost/iteration outcomes, visible failure on TEST-002, and documented methodology. Most hackathon agent submissions show one impressive run. Splunkology shows the variance between agent architectures, including negative results. That is the strongest engineering contribution.
 
 ## 3. Biggest External Win Risk
 
 The biggest risk outside the author's control is judge weighting.
 
-If the judges reward polished end-user incident-response workflow and immediate analyst utility, Valhuntir or another narrower tool could beat SIFTGuard despite weaker architecture. SIFTGuard's strongest contribution is methodological: evaluation discipline, multi-orchestrator comparison, threat model, limitations, and guardrail analysis. That is exactly the kind of work a technical reviewer may value highly and a demo-oriented judge may undervalue if the live path depends on cached data, SIFT-specific setup, or explanation-heavy context.
+If the judges reward polished end-user incident-response workflow and immediate analyst utility, Valhuntir or another narrower tool could beat Splunkology despite weaker architecture. Splunkology's strongest contribution is methodological: evaluation discipline, multi-orchestrator comparison, threat model, limitations, and guardrail analysis. That is exactly the kind of work a technical reviewer may value highly and a demo-oriented judge may undervalue if the live path depends on cached data, SIFT-specific setup, or explanation-heavy context.
 
 Secondary external risk: the "court-defensible" phrase may trigger a harsher evidentiary standard than a hackathon project can meet. Once a DFIR judge hears that claim, they may judge it like a forensic product rather than like an agent benchmark.
 

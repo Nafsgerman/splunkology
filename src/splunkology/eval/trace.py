@@ -42,7 +42,7 @@ class HypothesisEventType(StrEnum):
 
 
 class Orchestrator(StrEnum):
-    SIFTGUARD_NATIVE = "splunkology-native"
+    SPLUNKOLOGY_NATIVE = "splunkology-native"
     LANGGRAPH = "langgraph"
     OPENAI_FC = "openai-fc"
     CLAUDE_CODE = "claude-code"
@@ -184,7 +184,7 @@ class ExperimentConfig(BaseModel, frozen=True):
 
     agent_id: str
     model: str = Field(description="e.g. claude-sonnet-4-6, gpt-4o, gemini-2.5-pro")
-    orchestrator: Orchestrator = Orchestrator.SIFTGUARD_NATIVE
+    orchestrator: Orchestrator = Orchestrator.SPLUNKOLOGY_NATIVE
     self_correction: bool = True
     correlation: bool = True
     training_mode: bool = False

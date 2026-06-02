@@ -1,6 +1,6 @@
 """SOC domain models — replaces models/forensic.py.
 
-ToolOutcome and SocResult mirror the ForensicResult interface so
+ToolOutcome and SocResult mirror the SocResult interface so
 loop_v2.py dispatch machinery needs minimal changes.
 """
 from __future__ import annotations
@@ -18,7 +18,7 @@ class ToolOutcome(StrEnum):
 
 @dataclass
 class SocResult:
-    """Typed result from any Splunk tool call — mirrors ForensicResult interface."""
+    """Typed result from any Splunk tool call — mirrors SocResult interface."""
     tool: str
     outcome: ToolOutcome
     summary: str

@@ -74,7 +74,7 @@ class ClaudeCodeAdapter(BaseOrchestrator):
         ]
 
         env = os.environ.copy()
-        env["SIFTGUARD_CASE_ID"] = case_id
+        env["SPLUNKOLOGY_CASE_ID"] = case_id
         env_file = self.cwd / ".env"
         if env_file.exists():
             for line in env_file.read_text().splitlines():

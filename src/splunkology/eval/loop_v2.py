@@ -48,13 +48,13 @@ from splunkology.mcp_server.tools.mft import analyze_mft
 from splunkology.mcp_server.tools.registry import run_regripper
 from splunkology.mcp_server.tools.timeline import create_supertimeline, sort_timeline
 from splunkology.mcp_server.tools.volatility import vol_malfind, vol_netscan, vol_pslist
-from splunkology.models.forensic import ForensicResult, ToolOutcome
+from splunkology.models.soc import SocResult, ToolOutcome
 
 logger = logging.getLogger(__name__)
 console = Console()
 
-MAX_ITERATIONS = int(os.environ.get("SIFTGUARD_MAX_AGENT_ITERATIONS", "15"))
-DEFAULT_MODEL = os.environ.get("SIFTGUARD_MODEL", "claude-sonnet-4-6")
+MAX_ITERATIONS = int(os.environ.get("SPLUNKOLOGY_MAX_AGENT_ITERATIONS", "15"))
+DEFAULT_MODEL = os.environ.get("SPLUNKOLOGY_MODEL", "claude-sonnet-4-6")
 
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
@@ -196,10 +196,10 @@ class V2RunState:
     completed_iterations: int = 0
 
 
-async def _dispatch_tool(name: str, args: dict) -> ForensicResult:
+async def _dispatch_tool(name: str, args: dict) -> SocResult:
     fn = TOOL_REGISTRY.get(name)
     if not fn:
-        return ForensicResult(
+        return SocResult(
             tool=name,
             outcome=ToolOutcome.FAIL,
             summary=f"unknown tool: {name}",
@@ -622,7 +622,7 @@ async def run_case_v2(
     return final_report, run_id
 
 
-def _print_result_summary(tool_name: str, result: ForensicResult) -> None:
+def _print_result_summary(tool_name: str, result: SocResult) -> None:
     color = "green" if result.outcome.value == "ok" else "red"
     console.print(f"  [{color}]✓ {tool_name}:[/{color}] {result.summary} ({result.duration_ms}ms)")
 
