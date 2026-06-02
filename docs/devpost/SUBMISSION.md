@@ -1,257 +1,144 @@
-# Splunkology — Devpost Submission
+# Splunkology — Devpost Submission (WORK IN PROGRESS)
 
-Devpost project ID: 1004826-splunkology
-Source of truth: this file. Paste field-by-field into the Devpost form.
-Linked to README hero (v1.28.0-task23-readme-hero) — numbers must match.
+> ⚠️ This submission is mid-build for the Splunk Agentic Ops Hackathon
+> (Security track, deadline Jun 15 2026). Fields marked `[FILL]` are pending
+> real artifacts or measurement and are intentionally empty rather than
+> carried over from prior work. No Splunk/BOTS accuracy numbers exist yet.
+
+Source of truth: this file mirrors `README.md`. Paste field-by-field into the
+Devpost form. Numbers must match the README — and right now there are none to
+fabricate.
 
 ---
 
 ## Field: Project name
 
-```
 Splunkology
-```
 
 ---
 
 ## Field: Elevator pitch (tagline)
 
-```
-Autonomous DFIR with architecturally-bounded evidence integrity. Five orchestrators on one typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft.
-```
-(132 chars)
+Splunk-native autonomous incident triage — swappable LLM orchestrators over a typed Splunk tool layer, every step recorded in a tamper-evident audit log. Retargeted from the SIFTGuard DFIR engine.
+
+---
+
+## Field: What changed and when (retarget disclosure)
+
+Splunkology began as **SIFTGuard**, an autonomous DFIR agent I built that ran
+forensic tooling (Volatility, The Sleuth Kit, RegRipper) against memory and
+disk images. For this hackathon I am openly retargeting it to be
+**Splunk-native**:
+
+- **Evidence layer** moved from forensic disk/memory images to Splunk search
+  results and BOTS datasets.
+- **Tool surface** moved from forensic binaries to typed SPL / notable-event
+  tools behind a schema-validated MCP boundary.
+- **Framing** moved from forensic/legal "spoliation" to SOC triage and a
+  tamper-evident audit log.
+
+**Carried over (the architecture spine):** the typed MCP server boundary, the
+instrumented self-correcting agent loop, the append-only audit trail, and the
+multi-orchestrator evaluation harness.
+
+**New / being rebuilt for Splunk:** the Splunk REST transport, the BOTS dataset
+loader, the SOC verdict schema (MITRE technique mappings + SPL evidence), the
+SOC triage UI, and **all evaluation numbers** — prior forensic F1 results do not
+transfer and have been removed.
+
+The public git history shows the SIFTGuard origin. This is an openly-disclosed
+retarget of my own prior work, stated here so the lineage is transparent and
+verifiable rather than hidden.
 
 ---
 
 ## Field: About the project
 
 ```markdown
-## Inspiration
-
-In November 2025, Anthropic's security team published findings on GTG-1002 — a Chinese state-sponsored operation where attackers used Claude Code to run autonomous reconnaissance, exploitation, and lateral movement at 80-90% autonomy. The AI handled everything at request rates described as "physically impossible" for human operators.
-
-That was the offensive side.
-
-The SIFT Workstation is the defensive platform. 18 years old. 200+ tools. Trusted by every serious incident responder on the planet. And defenders using it still look up command-line flags during active incidents.
-
-The gap is real: adversaries move at machine speed. Defenders don't. Splunkology closes that gap.
-
 ## What it does
 
-Splunkology is an autonomous DFIR agent that runs **five orchestration paradigms** — Anthropic native loop, LangGraph, OpenAI function-calling, Gemini 3 Pro, and Claude Code headless CLI — against a **single typed MCP server** of forensic tools. The same evidence, the same Pydantic-validated tools, and comparable model classes are held fixed across all five adapters; orchestration is the variable under test. We measure what that variable buys across **three forensics datasets** and publish the F1 numbers.
+Given a case briefing or a Splunk notable event, Splunkology autonomously
+issues SPL searches against a Splunk instance, correlates the results into an
+incident hypothesis, maps findings to MITRE ATT&CK techniques, and emits a
+structured incident verdict with the supporting SPL recorded as evidence.
 
-### Headline — 5 orchestrators × 3 datasets
+## How it works
 
-| Orchestrator | TEST-001 (memory) | TEST-002 (disk) | TEST-003 (ROCBA) | Cross-dataset mean |
-|---|---:|---:|---:|---:|
-| **Native Loop** (claude-sonnet-4-6) | 1.000 | 0.600 | **1.000** | **0.867** |
-| OpenAI FC (gpt-5.5) | **1.000** | **0.800** | — † | 0.900 (2/3) |
-| Claude Code (headless, Sonnet 4.6) | 1.000 | 0.000 ‡ | — † | 0.500 (2/3) |
-| LangGraph (Sonnet 4.6) | 0.750 | 0.000 ‡ | 0.015 | 0.255 |
-| Gemini 3 Pro | 0.250 | 0.400 | — † | 0.325 (2/3) |
+- **Splunk-native investigation.** The agent reasons over SPL search results and
+  notable events through a typed MCP tool surface — never free-form shell or raw
+  SPL injection.
+- **Multi-orchestrator harness.** The same model API and the same typed tools are
+  held fixed across multiple orchestration adapters (native loop, LangGraph,
+  OpenAI function-calling, Gemini, Claude Code headless) so orchestration is the
+  only variable under test.
+- **Tamper-evident audit log.** Every tool call and agent step is written to an
+  append-only store, so each line of a verdict traces back to the SPL query that
+  produced it.
 
-Scorer: applicability-aware F1. TEST-001 = SRL-2018 APT memory image, 4 applicable IOCs. TEST-002 = NIST CFReDS Hacking Case (Greg Schardt / Mr. Evil), NTFS disk image, 5 applicable IOCs. TEST-003 = SANS ROCBA Standard Forensic Case (Fred Rocba IP theft, May 2026), NTFS C: drive with broken backup boot sector, 12 applicable IOCs.
+Architecture diagram: docs/architecture/architecture.svg
+Design rationale and rejected alternatives: docs/adr/
 
-† No scoreable verdict on TEST-003 — agent terminated before surfacing disk artifacts.
-‡ Tool-applicability failure on raw disk evidence (documented in `LIMITATIONS.md`).
+## Evaluation
 
-**Native Loop is the only orchestrator that produces scoreable verdicts across all three datasets.** Three datasets covering three distinct evidence types — memory APT hunt, NTFS disk forensics, and live IP-theft investigation with anti-forensic counterplay — and Native Loop is the single configuration that generalizes. Cross-dataset mean F1 = 0.867. Same model API surface, same typed MCP server, same prompts across all five adapters. Orchestration is what differs.
-
-## How we built it
-
-**Why orchestration is the variable under test** (ADR-006 §1):
-
-> A Digital Forensics and Incident Response (DFIR) agent that ships behind a Security Operations Center (SOC) perimeter cannot be coupled to a single LLM vendor or a single orchestration framework. The coupling is not an aesthetic concern; it is an operational and regulatory liability.
-
-Outage risk (Anthropic 2025-05; OpenAI 2025-06; Google 2025-09), regulatory diversity (BaFin-supervised banks, KRITIS infrastructure, FedRAMP-Moderate, HIPAA), model deprecation cycles, and on-prem deployment requirements all push the same direction: the orchestration layer has to be indifferent to which model is reasoning behind it. **Five live adapters on one typed MCP surface is how Splunkology treats vendor neutrality as a property of the architecture, not a marketing claim.**
-
-**What the multi-orchestrator design surfaced** (verbatim, ADR-006 §5.2):
-
-> Lowest-to-highest cost ratio on the same evidence file: **$0.1949 (OpenAI FC) → $0.5293 (Claude Code), a 2.72× spread**. This is not measurement noise. Median seeded variance for the canonical native-loop baseline is σ = 0.000 across n = 6 seeds (TEST-001, F1 = 0.909, recorded in ADR-001 §4 D5). A 2.72× delta with σ ≈ 0 on the baseline is structural and explainable: OpenAI FC's four iterations reflect aggressive parallel tool-call batching driving cost down; Claude Code's eighteen iterations reflect headless MCP-RPC round-trip overhead — the design tradeoff named in §3.4 — driving cost up. The three direct-API adapters in between ($0.2289–$0.2591) cluster tightly because they pay neither extreme. The framework would have been blind to all of this under any single-orchestrator design (A1) or single-framework design (A2).
-
-**The architectural claim.** A Splunkology agent cannot alter, delete, or fabricate evidence, and we prove it with automated tests rather than a policy document — 15/15 spoliation suite, run on every push to `main`. Four hard boundaries make that claim mechanical, not aspirational:
-
-1. **Typed MCP boundary.** Every forensic tool is a Pydantic-validated function with a frozen schema. The agent never sees raw shell; it sees structured findings with provenance.
-2. **Instrumented agent loop.** Every iteration writes a structured snapshot — tokens, cost, confidence vector, hypothesis state, self-correction events — immutable once written.
-3. **Append-only audit DB.** SQLite with insert-only access enforced at the data layer. Migrations versioned and verified at startup.
-4. **Versioned methodology.** Every report stamped with the methodology version and SHA-256 of `EVAL_FRAMEWORK.md`. Change the scoring rules and the version bumps; prior results stay attributable to the methodology that produced them.
-
-Architectural rationale and rejected alternatives: `ADR-001` (evaluation framework), `ADR-006` (multi-orchestrator + vendor lock-in). Full ADR index at `docs/adr/`.
-
-## Challenges we ran into
-
-**Single-variable isolation across five paradigms.** LangGraph state graphs, OpenAI's function-calling loop, Gemini's tool-use surface, Anthropic's native Messages API, and Claude Code's headless CLI each carry different assumptions about state, retries, parallelism, and trace shape. Getting all five to consume the same Pydantic MCP server with comparable model classes and the same prompts — so that orchestration becomes the variable under test — was the bulk of Phase B engineering.
-
-**Tool-applicability failure on disk evidence.** LangGraph and Claude Code over-iterate when the MCP surface (memory-focused Volatility 3 plugins) does not match the evidence type. The failure mode is iteration-budget exhaustion, not hallucination — both agents continued reasoning correctly about a tool surface that could not return findings. Documented in `docs/LIMITATIONS.md`; graceful disk-tool degradation is flagged Phase D scope.
-
-**Applicability-aware scoring.** The original text-match scorer punished correct verdicts on the wrong evidence type. We built an applicability layer into the ground truth (GT v1.1.0) so that an IOC counts as scoreable only when the tool surface could plausibly produce it. Specification: `docs/EVAL_FRAMEWORK.md`.
-
-**Safe execution without a sandbox.** SIFT runs real forensic tools against real evidence. The 15/15 spoliation suite actively attempts to destroy evidence and verifies all thirteen destructive attacks are blocked at the MCP layer — by architecture, not by prompt.
-
-## Accomplishments that we're proud of
-
-- **Five orchestrators live** on the same typed MCP server with F1 measured per dataset
-- **Three of five score F1 = 1.000 on TEST-001**; OpenAI FC clears F1 ≥ 0.80 on both TEST-001 and TEST-002
-- **Spoliation test suite: 15/15 — 13 attacks blocked architecturally** at the MCP layer — not by prompt
-- **Applicability-aware F1 scorer** with versioned methodology and SHA-256 stamping
-- **Append-only audit DB** — every finding in every report traces to a tool-execution row
-- **Live FastAPI/SSE dashboard** streams tool calls, IOC detection, and hypothesis state across all five orchestrators in real time
-- **Architecturally-bounded evidence integrity** — SBOM signed with Sigstore keyless; SLSA Level 3 build provenance
-
-## What we learned
-
-Single-variable testing changes what the project is allowed to claim. We started assuming orchestration was incidental — pick any framework, the model does the work. The 2.72× cost spread with σ ≈ 0 on the baseline showed orchestration is the variable that decides whether a DFIR agent is deployable in a regulated SOC. Three of five orchestrators tie at F1 = 1.000 on memory evidence; only one survives the dataset shift to disk. That is not a result you can produce with one orchestrator and a hypothesis.
-
-Architecture Decision Records are not internal paperwork. ADR-006 §1 and §5.2 became the strongest paragraphs in the README hero and this Devpost. Writing the architectural rationale in the form a judge can read pays compounding returns across every submission artifact.
-
-## What's next
-
-- Registry, MFT, and filesystem tools end-to-end on live disk images (closes the TEST-002 tool-applicability gap)
-- IOC visualization graph — visual links between processes, IPs, and timestamps
-- Multi-source correlation — cross-reference memory and disk findings, flag discrepancies
-- Benchmark expansion — more public datasets, more orchestrator × dataset cells
-- Analyst training mode — agent explains each tool choice and what it expected to find
+[FILL — not yet measured.] No F1, precision/recall, or cost figures against
+Splunk/BOTS data exist yet. Splunk-native measurement begins once the agent
+runs end-to-end against loaded BOTS data. Prior forensic-dataset results are
+non-transferable and have been removed.
 ```
 
 ---
 
 ## Field: Built with
 
-Keep existing tags. **Add these** (currently missing — multi-orchestrator and supply-chain story is invisible without them):
-
-```
-anthropic-claude-code
-langgraph
-openai
-google-gemini
-github-actions
-sigstore
-syft
-pytest
-uvicorn
-ntfs
-```
-
-Final tag list (15 existing + 10 new = 25 total):
-`python, fastapi, mcp-(model-context-protocol), anthropic-claude-sonnet, anthropic-claude-code, langgraph, openai, google-gemini, volatility-3, the-sleuth-kit-(tsk), regripper, log2timeline, ntfs, pydantic, sqlite, server-sent-events, reportlab, uvicorn, pytest, github-actions, sigstore, syft, sans, sift, workstation`
+python, fastapi, mcp-(model-context-protocol), anthropic-claude, langgraph, openai, google-gemini, anthropic-claude-code, pydantic, sqlite, server-sent-events, uvicorn, pytest, github-actions, splunk, spl
 
 ---
 
 ## Field: Open source code repository
 
-```
 https://github.com/Nafsgerman/splunkology
-```
-(public June 10, 2026; MIT)
+
+(public; MIT)
 
 ---
 
-## Field: Step-by-step instructions
+## Field: Try it out — step-by-step
 
-```
-Step-by-step (runs on SANS SIFT Workstation; also Linux/macOS with Volatility 3 + TSK installed):
+Requires a Splunk instance and an Anthropic API key. See README Quick start.
 
-1. git clone https://github.com/Nafsgerman/splunkology
-2. cd splunkology
-3. python3 -m venv .venv && source .venv/bin/activate
-4. pip install -e ".[dev]" && pip install reportlab
-5. cp .env.example .env  # set ANTHROPIC_API_KEY, OPENAI_API_KEY, GOOGLE_API_KEY
-6. uvicorn splunkology.dashboard.app:app --host 0.0.0.0 --port 8080
-7. Open http://localhost:8080
-8. Enter: Case ID = TEST-001, Memory Image = /cases/TEST-001/base-hunt-memory.img,
-   Briefing = "Windows 10 x64. APT hunt. Find evil."
-9. Select orchestrator from dropdown: Native Loop / LangGraph / OpenAI FC / Gemini 3 Pro / Claude Code
-10. Click Investigate — live IOC detection, tool execution, hypothesis tracker stream in
-11. Click Export PDF when Status = Complete
+git clone https://github.com/Nafsgerman/splunkology.git
+cd splunkology
+python3 -m venv .venv && source .venv/bin/activate
+pip install -e ".[dev]"
+cp .env.example .env   (set ANTHROPIC_API_KEY, SPLUNK_URL, SPLUNK_USER, SPLUNK_PASS)
+uvicorn splunkology.dashboard.app:app --host 0.0.0.0 --port 8080
+Open http://localhost:8080
 
-From Mac (SSH port forward to SIFT VM):
-   ssh -f -N -L 8080:localhost:8080 sansforensics@<SIFT_VM_IP>
-   Open http://localhost:8080
+Run the test suite (harness/tooling tests — not accuracy measurements):
+python3 -m pytest -q
 
-Spoliation test (architectural evidence-integrity proof):
-   python -m pytest tests/spoliation/test_spoliation.py -v
-   Expected: 12 passed.
-
-Multi-orchestrator benchmark (TEST-001 + TEST-002 × 5 adapters):
-   python -m tests.benchmark.runner --case TEST-001 --agent=all --evidence-dir /cases
-   python -m tests.benchmark.runner --case TEST-002 --agent=all --evidence-dir /cases
-   Results stamped with methodology version + EVAL_FRAMEWORK.md SHA-256.
-```
+> The end-to-end investigation CLI and the Splunk SOC triage UI are in progress.
+> See the README Status table for the honest current state.
 
 ---
 
-## Field: Evidence dataset documentation
+## Field: Limitations & what's next
 
-```
-Case: TEST-001
-Evidence type: Windows 10 x64 memory image
-File: /cases/TEST-001/base-hunt-memory.img (5 GB)
-Source: SRL-2018 APT memory image (Protocol SIFT starter dataset, SANS SIFT Workstation)
-Scenario: APT hunt — suspected compromise, unknown initial vector
-Applicable IOCs (GT v1.1.0): 4
-Tool surface match: memory-focused Volatility 3 (windows.psscan, windows.netscan, windows.malfind)
+Full limitations: docs/LIMITATIONS.md
 
-What the best run found (OpenAI FC, F1 = 1.000):
-- 5 confirmed malicious processes: subject_ctrl.e, license_ctrl.e, usbclient.exe, ftusbsrvc.exe, cmd.exe
-- 8 IOCs (3 network, 5 process)
-- Active C2 beaconing to 172.16.4.10:8080 (multiple CLOSE_WAIT)
-- External exfiltration attempt to 23.194.110.27:80 (SYN_SENT at capture)
-- Backdoor listeners on ports 5682, 33001; WinRM on 5985 (lateral-movement vector)
-- Compromise window: 2018-09-03 (boot) → 2018-09-07 (capture)
-- Verdict: CONFIRMED COMPROMISE — APT activity
-
-Case: TEST-002
-Evidence type: NTFS disk image
-File: /cases/TEST-002/SCHARDT.img
-Source: NIST CFReDS — Greg Schardt / Mr. Evil hacking case
-Scenario: Wardriving suspect — laptop seized, identity confirmation and tool inventory required
-Applicable IOCs (GT v1.1.0): 5
-Tool surface match: disk tools (fls, icat, MFT) — full wire-up in Phase D
-
-Reproducibility: results cached at /cases/<CASE>/splunkology_cache/ for deterministic re-runs.
-Methodology version: v1.0.0 (SHA-256 stamped in every report; spec: docs/EVAL_FRAMEWORK.md).
-```
+- Splunk-native evaluation not yet run — no accuracy numbers exist.
+- SOC verdict schema (MITRE + SPL evidence) being wired through prompt → validator → loop.
+- Splunk SOC triage UI mid-migration from the prior forensic layout.
+- Agent currently runs its own model loop over SPL; leveraging a Splunk-native
+  AI capability (Hosted Models / AI Assistant over REST) is on the roadmap.
 
 ---
 
-## Field: Accuracy report
+## Project Media
 
-```
-Methodology: Applicability-aware F1 (splunkology.eval.score), GT v1.1.0.
-Datasets: TEST-001 (memory, 4 applicable IOCs), TEST-002 (NTFS disk, 5 applicable IOCs).
-Variable isolated: orchestrator. Model API, MCP tools, and prompts held fixed across all five adapters.
-
-| Orchestrator                    | TEST-001 F1 | TEST-002 F1 | Cost USD | Iter | Wall (s) |
-|---------------------------------|------------:|------------:|---------:|-----:|---------:|
-| OpenAI FC (gpt-5.5)             |       1.000 |       0.800 |   0.1949 |    4 |    132.2 |
-| Native Loop (claude-sonnet-4-6) |       1.000 |       0.600 |   0.2308 |    7 |    104.0 |
-| Claude Code (headless)          |       1.000 |     0.000 † |   0.5293 |   18 |    258.7 |
-| LangGraph (Sonnet 4.6)          |       0.750 |     0.000 † |   0.2289 |    7 |    106.2 |
-| Gemini 3 Pro                    |       0.250 |       0.400 |   0.2591 |    5 |    146.7 |
-
-† Tool-applicability failure on disk evidence — iteration-budget exhaustion, not hallucination.
-  Both agents reasoned correctly about a tool surface that could not return findings.
-  Documented in docs/LIMITATIONS.md; graceful disk-tool degradation is Phase D scope.
-
-Key results:
-- 3 of 5 orchestrators score F1 = 1.000 on TEST-001
-- 1 orchestrator (OpenAI FC) clears F1 ≥ 0.80 on both datasets
-- Cost spread on identical evidence: 2.72× (OpenAI FC $0.1949 → Claude Code $0.5293)
-- Baseline reproducibility: σ = 0.000 across n = 6 seeds on native-loop / TEST-001 (ADR-001 §4 D5)
-- Scored runs, costs, and traces recorded; provenance gaps disclosed in THREAT_MODEL.md. Every finding traces to a tool-execution row in the append-only audit DB.
-
-Evidence integrity: spoliation test suite — 15/15 (13 destructive attacks blocked architecturally, 2 legitimate-command pass-throughs verified).
-Proof: python -m pytest tests/spoliation/test_spoliation.py -v → 15 passed.
-```
-
----
-
-## Project Media — image gallery (in upload order)
-
-1. `docs/figures/figure_full.png` — caption: **"Splunkology 7-panel evaluation dashboard: F1 by orchestrator (Panel 7), cost-vs-accuracy Pareto, self-correction taxonomy, ablation, seeded variance σ = 0.000."** (REPLACE the current "architecture" caption — wrong asset.)
-2. Panel 7 standalone screenshot — capture from running dashboard (command below).
-3. (Optional, T25) Architecture diagram — currently a 77-byte SVG stub. Punt to T25 unless time.
+- Architecture diagram: docs/architecture/architecture.svg
+- Dashboard screenshots: [FILL — capture once SOC triage UI lands]
 
 ## Video demo link
 
-Empty until T25 (Loom recording). Save & continue with field blank for now; revisit T25.
+[FILL — record once the SOC triage UI and an end-to-end BOTS run are ready. Must be < 3 min.]

@@ -1,14 +1,23 @@
-"""T24: Devpost SUBMISSION.md drift guard.
+"""Devpost SUBMISSION.md drift guard (Splunk-era, WIP).
 
-The Devpost submission must (a) carry the README hero tagline verbatim,
-(b) quote ADR-006 §5.2 cost-spread number (2.72×), (c) name all five
-orchestrators, (d) reference both TEST-001 and TEST-002, (e) state
-15/15 spoliation, (f) not reference dropped TEST-004 / TEST-005.
+The prior forensic submission (F1 tables, cost-spread metrics, spoliation
+counts, forensic datasets) was a previous project's artifact and has been
+removed. No Splunk/BOTS accuracy numbers exist yet, so this guard asserts
+structure and honest-WIP posture only — never a metric. Re-adding any
+fabricated number here is a barred submission claim.
 """
 
 from pathlib import Path
 
-SUB = Path(__file__).resolve().parents[1] / "docs" / "devpost" / "SUBMISSION.md"
+REPO_ROOT = Path(__file__).resolve().parents[1]
+SUB = REPO_ROOT / "docs" / "devpost" / "SUBMISSION.md"
+README = REPO_ROOT / "README.md"
+
+TAGLINE = (
+    "Splunk-native autonomous incident triage — swappable LLM orchestrators "
+    "over a typed Splunk tool layer, every step recorded in a tamper-evident "
+    "audit log. Retargeted from the SIFTGuard DFIR engine."
+)
 
 
 def _read() -> str:
@@ -20,42 +29,36 @@ def test_submission_exists() -> None:
 
 
 def test_tagline_matches_readme_hero() -> None:
-    tagline = (
-        "Autonomous DFIR with architecturally-bounded evidence integrity. Five orchestrators on one "
-        "typed MCP server. Real F1 across three forensics datasets — memory APT, NTFS disk, live IP-theft."
+    assert TAGLINE in _read(), "submission must carry the canonical tagline verbatim"
+    assert TAGLINE in README.read_text(encoding="utf-8"), (
+        "README hero must carry the same canonical tagline verbatim"
     )
-    assert tagline in _read(), "tagline must match README hero subtitle verbatim"
 
 
-def test_quotes_adr_006_cost_spread() -> None:
-    assert "2.72×" in _read(), "must quote ADR-006 §5.2 cost-spread (2.72×)"
+def test_discloses_retarget() -> None:
+    text = _read().lower()
+    assert "siftguard" in text, "submission must disclose the SIFTGuard lineage"
 
 
-def test_names_all_five_orchestrators() -> None:
+def test_no_fabricated_metrics() -> None:
     text = _read()
-    for name in ("OpenAI FC", "Native Loop", "Claude Code", "LangGraph", "Gemini 3 Pro"):
-        assert name in text, f"submission must name orchestrator: {name}"
-
-
-def test_references_both_datasets() -> None:
-    text = _read()
-    assert "TEST-001" in text and "TEST-002" in text
-
-
-def test_spoliation_12_of_12() -> None:
-    assert "15/15" in _read()
-
-
-def test_no_dropped_test_cases() -> None:
-    text = _read()
-    for dropped in ("TEST-004", "TEST-005"):
-        assert dropped not in text, (
-            f"{dropped} is permanently dropped per ship list — must not appear"
+    for banned in ("2.72", "F1 =", "F1=", "15/15", "12/12", "0.867", "1.000"):
+        assert banned not in text, (
+            f"barred fabricated/forensic metric present in submission: {banned!r}"
         )
 
 
-def test_evaluation_methodology_linked() -> None:
-    assert "EVAL_FRAMEWORK.md" in _read()
+def test_no_forensic_dataset_refs() -> None:
+    text = _read()
+    for banned in ("TEST-001", "TEST-002", "TEST-003", "SRL-2018", "Schardt", "ROCBA"):
+        assert banned not in text, f"forensic-era dataset reference must not appear: {banned!r}"
+
+
+def test_evaluation_pending_stated() -> None:
+    text = _read().lower()
+    assert "pending" in text or "not yet measured" in text or "no" in text, (
+        "submission must state evaluation is pending (no Splunk numbers yet)"
+    )
 
 
 def test_limitations_linked() -> None:
@@ -63,7 +66,4 @@ def test_limitations_linked() -> None:
 
 
 def test_no_broken_adr_007_link() -> None:
-    """ADR-007 file currently missing (T15 scope); do not link from submission."""
-    assert "ADR-007" not in _read(), (
-        "ADR-007 file does not exist yet — do not reference until T15 lands"
-    )
+    assert "ADR-007" not in _read(), "ADR-007 is mid-rewrite — do not reference until it lands"

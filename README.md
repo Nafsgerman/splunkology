@@ -2,6 +2,8 @@
 
 > ⚠️ **Work in progress.** Splunkology is under active development for the Splunk Agentic Ops Hackathon (deadline Jun 15, 2026). The Splunk-native integration, evaluation on Splunk data, UI, and architecture diagram are being built now. Sections marked `[FILL]` are pending real measurement or artifacts — they are intentionally empty rather than carried over from prior work.
 
+**Splunk-native autonomous incident triage — swappable LLM orchestrators over a typed Splunk tool layer, every step recorded in a tamper-evident audit log. Retargeted from the SIFTGuard DFIR engine.**
+
 An autonomous SOC (Security Operations) agent for **Splunk**. Splunkology runs a self-correcting agent loop against Splunk data — issuing SPL searches, reading notable events, and producing structured incident verdicts — through a typed MCP tool surface, with a multi-orchestrator evaluation harness so the orchestration layer is not coupled to a single LLM vendor.
 
 **Splunk Agentic Ops Hackathon 2026 · Security track** · Public repository · MIT
@@ -48,7 +50,7 @@ Core ideas:
 | Evaluation on Splunk / BOTS data | Not started — no Splunk numbers measured yet |
 | Demo video (< 3 min) | Not started — Phase 2 |
 
-Test suite: `262 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
+Test suite: `252 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
 
 ---
 
@@ -159,7 +161,7 @@ python3 -m pytest -q
 
 ## Evaluation
 
-The evaluation methodology (multi-orchestrator comparison on a fixed model + fixed typed tools, with an applicability-aware scorer and seeded determinism checks) is carried over from the prior project and documented in [`docs/EVAL_FRAMEWORK.md`](docs/EVAL_FRAMEWORK.md).
+The evaluation harness (multi-orchestrator comparison on a fixed model and fixed typed tools) is carried over from the prior project. Its methodology document is being rewritten for the Splunk domain and is intentionally not linked here until it reflects Splunk-native scoring rather than forensic ones.
 
 **Splunk-native accuracy numbers: `[FILL — not yet measured]`.** No F1, precision/recall, or cost figures against Splunk/BOTS data exist yet. Prior forensic-dataset results are not transferable to this domain and have been removed. This section will be populated once the agent is running end-to-end against BOTS data.
 
