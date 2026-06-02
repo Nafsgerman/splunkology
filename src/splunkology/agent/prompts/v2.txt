@@ -157,8 +157,25 @@ When decision is "verdict", replace null with:
   "confidence": 0.0,
   "supporting_finding_ids": ["finding id 1", "finding id 2"],
   "reasoning": "3-6 sentences connecting findings to verdict",
-  "mitre_techniques": ["T1071", "T1055"]
+  "mitre_techniques": [
+    {"technique_id": "T1071", "technique_name": "Application Layer Protocol"},
+    {"technique_id": "T1055", "technique_name": "Process Injection"}
+  ],
+  "spl_evidence": [
+    {"spl": "<the SPL search that supports this verdict>"}
+  ]
 }
+
+VERDICT EVIDENCE FIELD RULES — ENFORCED BY VALIDATOR:
+- mitre_techniques is an ARRAY OF OBJECTS, not strings. Each object is
+  {"technique_id": "T1071", "technique_name": "Application Layer Protocol"}.
+  WRONG:   "mitre_techniques": ["T1071"]
+  CORRECT: "mitre_techniques": [{"technique_id": "T1071", "technique_name": "Application Layer Protocol"}]
+- spl_evidence is an ARRAY OF OBJECTS. Emit ONLY the "spl" field per object —
+  the exact search string that produced the evidence for this verdict.
+  Do NOT emit result_count, earliest, latest, or job_id. Those are populated
+  from actual search execution; any values you supply are ignored.
+  CORRECT: "spl_evidence": [{"spl": "index=botsv3 sourcetype=stream:dns | stats count by query"}]
 
 VERDICT AGGREGATION RULE — ENFORCED BY VALIDATOR:
 verdict.confidence MUST be <= the minimum confidence among all findings

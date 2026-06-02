@@ -50,12 +50,59 @@ class HypothesisOutput(BaseModel):
     reasoning: str
 
 
+class MitreMappingOutput(BaseModel):
+    technique_id: str
+    technique_name: str
+    confidence: float | None = None
+
+
+class SplEvidenceOutput(BaseModel):
+    spl: str
+    result_count: int | None = None
+    earliest: str | None = None
+    latest: str | None = None
+    job_id: str | None = None
+
+
 class VerdictOutput(BaseModel):
     claim: str
     confidence: float = Field(ge=0.0, le=1.0)
     supporting_finding_ids: list[str]
     reasoning: str
-    mitre_techniques: list[str] = Field(default_factory=list)
+    mitre_techniques: list[MitreMappingOutput] = Field(default_factory=list)
+    spl_evidence: list[SplEvidenceOutput] = Field(default_factory=list)
+
+    def to_incident_verdict(self):
+        from splunkology.models.soc import IncidentVerdict, MitreMapping, SplEvidence
+
+        return IncidentVerdict(
+            claim=self.claim,
+            confidence=self.confidence,
+            mitre_techniques=[
+                MitreMapping(
+                    technique_id=m.technique_id,
+                    technique_name=m.technique_name,
+                    confidence=m.confidence,
+                )
+                for m in self.mitre_techniques
+            ],
+            spl_evidence=[
+                SplEvidence(
+                    spl=e.spl,
+                    **{
+                        k: v
+                        for k, v in {
+                            "result_count": e.result_count,
+                            "earliest": e.earliest,
+                            "latest": e.latest,
+                            "job_id": e.job_id,
+                        }.items()
+                        if v is not None
+                    },
+                )
+                for e in self.spl_evidence
+            ],
+        )
 
 
 class NextAction(BaseModel):
