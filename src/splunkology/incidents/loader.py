@@ -7,6 +7,7 @@ Replaces the forensic cases.loader. Same interface:
 Phase 1: static BOTS dataset stubs (unblocks dashboard + tests).
 Phase 2: live pull from Splunk notable events via SplunkClient.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass

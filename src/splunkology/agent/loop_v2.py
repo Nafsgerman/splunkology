@@ -55,7 +55,7 @@ DEFAULT_MODEL = os.environ.get("SPLUNKOLOGY_MODEL", "claude-sonnet-4-6")
 IOC_TYPES = {"process", "ip", "port", "technique"}
 
 TOOL_REGISTRY = {
-    "splunk_search": None,   # dispatched via SplunkClient directly
+    "splunk_search": None,  # dispatched via SplunkClient directly
     "splunk_indexes": None,
     "splunk_server_info": None,
 }
@@ -106,6 +106,7 @@ class V2RunState:
 
 async def _dispatch_tool(name: str, args: dict) -> SocResult:
     import time
+
     t0 = time.monotonic()
     client = SplunkClient()
     try:

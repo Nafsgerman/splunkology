@@ -56,7 +56,6 @@ def test_old_adr_007_scorer_filename_is_gone() -> None:
     assert not f.exists(), "Old ADR-007-scorer-audit-db.md must be renamed to ADR-009"
 
 
-
 def test_release_notes_adr_links_resolve() -> None:
     rn = _read(REPO_ROOT / "docs" / "RELEASE_NOTES.md")
     for match in re.findall(r"docs/adr/(ADR-\d{3}-[a-z0-9-]+\.md)", rn):
@@ -79,7 +78,7 @@ def test_adr_003_substantive_rewrite() -> None:
         "ADR-007",
     ):
         assert keyword in body, f"ADR-003 missing keyword: {keyword}"
-        
+
 
 def test_no_stale_adr_007_scorer_reference_in_dashboard() -> None:
     dash = _read(REPO_ROOT / "src" / "splunkology" / "dashboard" / "index.html")

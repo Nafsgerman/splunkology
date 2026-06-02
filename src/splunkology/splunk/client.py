@@ -4,8 +4,10 @@ SplunkClient is the single seam between the agent and Splunk.
 Today: REST /services/search/jobs (basic auth, no KVStore dependency).
 Future: swap _transport for MCP Bearer — zero changes above this layer.
 """
+
 from __future__ import annotations
 
+import os
 import time
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
@@ -13,7 +15,6 @@ from typing import Any
 
 import requests
 import urllib3
-import os
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -21,6 +22,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 # ---------------------------------------------------------------------------
 # Result types
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class SearchResult:
@@ -54,6 +56,7 @@ class SplunkServerInfo:
 # Abstract transport — lets us swap REST → MCP later
 # ---------------------------------------------------------------------------
 
+
 class _Transport(ABC):
     @abstractmethod
     def search(self, spl: str, earliest: str, latest: str) -> SearchResult: ...
@@ -68,6 +71,7 @@ class _Transport(ABC):
 # ---------------------------------------------------------------------------
 # REST transport (active)
 # ---------------------------------------------------------------------------
+
 
 class _RestTransport(_Transport):
     def __init__(self, base_url: str, username: str, password: str, timeout: int = 60) -> None:
@@ -101,12 +105,15 @@ class _RestTransport(_Transport):
         t0 = time.monotonic()
 
         # Create job
-        job = self._post("/services/search/jobs", {
-            "search": spl if spl.startswith("search ") else f"search {spl}",
-            "earliest_time": earliest,
-            "latest_time": latest,
-            "exec_mode": "blocking",  # wait for completion
-        })
+        job = self._post(
+            "/services/search/jobs",
+            {
+                "search": spl if spl.startswith("search ") else f"search {spl}",
+                "earliest_time": earliest,
+                "latest_time": latest,
+                "exec_mode": "blocking",  # wait for completion
+            },
+        )
         sid = job["sid"]
 
         # Fetch results (up to 1000 events — enough for SOC triage)
@@ -128,13 +135,15 @@ class _RestTransport(_Transport):
         out = []
         for entry in data.get("entry", []):
             c = entry.get("content", {})
-            out.append(IndexInfo(
-                name=entry["name"],
-                total_event_count=int(c.get("totalEventCount", 0)),
-                current_db_size_mb=round(int(c.get("currentDBSizeMB", 0)), 2),
-                earliest_time=c.get("minTime", ""),
-                latest_time=c.get("maxTime", ""),
-            ))
+            out.append(
+                IndexInfo(
+                    name=entry["name"],
+                    total_event_count=int(c.get("totalEventCount", 0)),
+                    current_db_size_mb=round(int(c.get("currentDBSizeMB", 0)), 2),
+                    earliest_time=c.get("minTime", ""),
+                    latest_time=c.get("maxTime", ""),
+                )
+            )
         return out
 
     def server_info(self) -> SplunkServerInfo:
@@ -151,6 +160,7 @@ class _RestTransport(_Transport):
 # ---------------------------------------------------------------------------
 # Public facade
 # ---------------------------------------------------------------------------
+
 
 class SplunkClient:
     """Single entry point for all Splunk I/O.

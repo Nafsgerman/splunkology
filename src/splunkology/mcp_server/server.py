@@ -5,6 +5,7 @@ Tools exposed to the agent loop:
   splunk_indexes     — list available indexes
   splunk_server_info — version/host check
 """
+
 from __future__ import annotations
 
 import asyncio
@@ -17,6 +18,7 @@ from mcp.types import TextContent, Tool
 from splunkology.splunk.client import SplunkClient
 
 app = Server("splunkology-mcp")
+
 
 def _client() -> SplunkClient:
     return SplunkClient(
@@ -72,6 +74,7 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
             latest=arguments.get("latest", "now"),
         )
         import json
+
         payload = {
             "job_id": result.job_id,
             "event_count": result.event_count,
@@ -83,13 +86,13 @@ async def call_tool(name: str, arguments: dict) -> list[TextContent]:
     if name == "splunk_indexes":
         indexes = client.list_indexes()
         import json
-        return [TextContent(type="text", text=json.dumps(
-            [vars(i) for i in indexes], indent=2
-        ))]
+
+        return [TextContent(type="text", text=json.dumps([vars(i) for i in indexes], indent=2))]
 
     if name == "splunk_server_info":
         info = client.server_info()
         import json
+
         return [TextContent(type="text", text=json.dumps(vars(info), indent=2))]
 
     raise ValueError(f"unknown tool: {name}")

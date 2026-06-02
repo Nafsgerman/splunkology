@@ -25,6 +25,7 @@ from rich.table import Table
 sys.path.insert(0, str(Path(__file__).parents[3] / "src"))
 
 from splunkology.agent.loop import run_case
+
 from tests.benchmark.scorer import BenchmarkScore, load_ground_truth, score_report
 
 console = Console()

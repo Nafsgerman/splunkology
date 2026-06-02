@@ -2,7 +2,10 @@ from __future__ import annotations
 
 from unittest.mock import MagicMock
 
-from splunkology.eval.analytics.panel_8_verification import get_verification_breakdown, render_panel_8
+from splunkology.eval.analytics.panel_8_verification import (
+    get_verification_breakdown,
+    render_panel_8,
+)
 from splunkology.eval.verifier_models import (
     VerificationMethod,
     VerificationResult,

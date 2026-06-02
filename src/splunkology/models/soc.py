@@ -3,6 +3,7 @@
 ToolOutcome and SocResult mirror the SocResult interface so
 loop_v2.py dispatch machinery needs minimal changes.
 """
+
 from __future__ import annotations
 
 from dataclasses import dataclass, field
@@ -21,6 +22,7 @@ class ToolOutcome(StrEnum):
 @dataclass
 class SocResult:
     """Typed result from any Splunk tool call — mirrors SocResult interface."""
+
     tool: str
     outcome: ToolOutcome
     summary: str
@@ -30,14 +32,18 @@ class SocResult:
 
     def model_dump_json(self, indent: int = 2) -> str:
         import json
-        return json.dumps({
-            "tool": self.tool,
-            "outcome": self.outcome.value,
-            "summary": self.summary,
-            "duration_ms": self.duration_ms,
-            "error": self.error,
-            "raw": self.raw,
-        }, indent=indent)
+
+        return json.dumps(
+            {
+                "tool": self.tool,
+                "outcome": self.outcome.value,
+                "summary": self.summary,
+                "duration_ms": self.duration_ms,
+                "error": self.error,
+                "raw": self.raw,
+            },
+            indent=indent,
+        )
 
 
 class MitreMapping(BaseModel):

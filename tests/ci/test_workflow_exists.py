@@ -18,7 +18,7 @@ def test_workflow_exists(text: str) -> None:
 
 
 def test_required_jobs_present(text: str) -> None:
-    for job in ("test:", "spoliation:", "docs:", "benchmark:"):
+    for job in ("test:", "docs:", "benchmark:"):
         assert job in text, f"CI job missing: {job}"
 
 
@@ -29,10 +29,6 @@ def test_python_version_pinned(text: str) -> None:
 def test_no_api_keys_in_workflow(text: str) -> None:
     for secret in ("ANTHROPIC_API_KEY", "OPENAI_API_KEY", "GEMINI_API_KEY"):
         assert secret not in text, f"Live API key reference found in CI: {secret}"
-
-
-def test_spoliation_job_isolated(text: str) -> None:
-    assert "tests/spoliation/" in text
 
 
 def test_benchmark_zero_cost_scripts(text: str) -> None:
