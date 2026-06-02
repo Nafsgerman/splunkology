@@ -225,3 +225,8 @@ MIT — see [`LICENSE`](LICENSE).
 ## Architecture Decision Records
 
 Design decisions are documented in [`docs/adr/`](docs/adr/). Note: several ADRs are mid-rewrite from forensic to Splunk SOC framing (e.g. ADR-007's "spoliation" → "tamper-evident SOC audit log").
+## Architecture
+
+![Splunkology architecture](docs/architecture/architecture.svg)
+
+Browser to FastAPI dashboard to swappable orchestrator dispatch to native agent loop (loop_v2) to Splunk REST tools to Splunk platform, with a tamper-evident SQLite audit trail recording every step. The dashed node marks planned Splunk-native AI integration over REST.

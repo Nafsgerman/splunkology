@@ -9,6 +9,8 @@ from dataclasses import dataclass, field
 from enum import StrEnum
 from typing import Any
 
+from pydantic import BaseModel, Field
+
 
 class ToolOutcome(StrEnum):
     OK = "ok"
@@ -38,25 +40,22 @@ class SocResult:
         }, indent=indent)
 
 
-@dataclass
-class MitreMapping:
-    technique_id: str   # e.g. T1059.001
+class MitreMapping(BaseModel):
+    technique_id: str
     technique_name: str
-    confidence: float   # 0.0–1.0
+    confidence: float | None = None
 
 
-@dataclass
-class SplEvidence:
+class SplEvidence(BaseModel):
     spl: str
-    result_count: int
-    earliest: str
-    latest: str
+    result_count: int = 0
+    earliest: str = ""
+    latest: str = ""
     job_id: str = ""
 
 
-@dataclass
-class IncidentVerdict:
+class IncidentVerdict(BaseModel):
     claim: str
     confidence: float
-    mitre_techniques: list[MitreMapping] = field(default_factory=list)
-    spl_evidence: list[SplEvidence] = field(default_factory=list)
+    mitre_techniques: list[MitreMapping] = Field(default_factory=list)
+    spl_evidence: list[SplEvidence] = Field(default_factory=list)
