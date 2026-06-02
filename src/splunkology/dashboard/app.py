@@ -105,7 +105,9 @@ async def _run_investigation(
     training_mode: bool = False,
     orchestrator: str = "native",
 ):
-    if orchestrator == "openai-fc":
+    if orchestrator == "mock":
+        from splunkology.dashboard._mock_run import run_case_mock as run_case
+    elif orchestrator == "openai-fc":
         from splunkology.orchestrators.openai_fc_adapter import run_case_openai_fc as run_case
     elif orchestrator == "langgraph":
         from splunkology.orchestrators.langgraph_adapter import run_case_langgraph as run_case
@@ -156,9 +158,10 @@ async def _run_investigation(
 
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
+        payload = {**data, "event_kind": data.get("type"), "type": mapped}
         with contextlib.suppress(Exception):
             _main_loop.call_soon_threadsafe(
-                lambda: _main_loop.create_task(push_event(session_id, {"type": mapped, **data}))
+                lambda: _main_loop.create_task(push_event(session_id, payload))
             )
 
     try:
@@ -463,6 +466,9 @@ async def export_pdf(session_id: str):
             block = _re2.sub(r"\*([^*]+)\*", r"\1", block)
             for line in block.split("\n"):
                 line = line.strip()
+                if line.startswith("> "):
+                    line = line[2:].strip()
+                line = line.replace("&", "&amp;")
                 if not line:
                     story.append(Spacer(1, 2 * mm))
                 elif line.startswith("## "):
