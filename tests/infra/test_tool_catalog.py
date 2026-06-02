@@ -18,7 +18,7 @@ def test_catalog_exists() -> None:
 
 def test_catalog_has_table_header() -> None:
     text = CATALOG.read_text()
-    assert "| Parameter | Type | Required | Default | Notes |" in text
+    assert "| Tool | Description | Required Parameters | Optional Parameters |" in text
 
 
 def test_catalog_covers_all_tools() -> None:
