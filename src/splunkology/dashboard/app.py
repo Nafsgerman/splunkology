@@ -88,11 +88,11 @@ async def start_investigation(request: Request):
     session_id = str(uuid.uuid4())[:8]
     case_id = body.get("case_id", f"CASE-{session_id}")
     briefing = body.get("briefing", "")
-    memory_image = body.get("memory_image", "")
+    data_source = body.get("data_source", "")
     training_mode = body.get("training_mode", False)
     orchestrator = body.get("orchestrator", "native")
     asyncio.create_task(
-        _run_investigation(session_id, case_id, briefing, memory_image, training_mode, orchestrator)
+        _run_investigation(session_id, case_id, briefing, data_source, training_mode, orchestrator)
     )
     return {"session_id": session_id, "case_id": case_id}
 
@@ -101,7 +101,7 @@ async def _run_investigation(
     session_id: str,
     case_id: str,
     briefing: str,
-    memory_image: str,
+    data_source: str,
     training_mode: bool = False,
     orchestrator: str = "native",
 ):
@@ -140,7 +140,7 @@ async def _run_investigation(
     else:
         from splunkology.agent.loop import run_case
 
-    evidence = {"memory_image": memory_image} if memory_image else {}
+    evidence = {"data_source": data_source} if data_source else {}
     audit_db = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
 
     _EVENT_MAP = {

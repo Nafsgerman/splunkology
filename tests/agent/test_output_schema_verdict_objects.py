@@ -83,9 +83,7 @@ def test_to_incident_verdict_maps_fields() -> None:
             "confidence": 0.70,
             "supporting_finding_ids": ["f1"],
             "reasoning": "r" * 20,
-            "mitre_techniques": [
-                {"technique_id": "T1055", "technique_name": "Process Injection"}
-            ],
+            "mitre_techniques": [{"technique_id": "T1055", "technique_name": "Process Injection"}],
             "spl_evidence": [{"spl": "index=botsv3 | head 1"}],
         }
     )

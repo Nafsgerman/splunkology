@@ -77,7 +77,9 @@ def test_verdict_confidence_exceeds_min_finding_rejected():
             "confidence": 0.95,
             "supporting_finding_ids": ["f1"],
             "reasoning": "C2 beacon confirmed.",
-            "mitre_techniques": [{"technique_id": "T1071", "technique_name": "Application Layer Protocol"}],
+            "mitre_techniques": [
+                {"technique_id": "T1071", "technique_name": "Application Layer Protocol"}
+            ],
         },
     )
     with pytest.raises(ValidationError, match="exceeds minimum supporting finding"):
@@ -97,7 +99,9 @@ def test_verdict_confidence_equals_min_finding_accepted():
             "confidence": 0.75,
             "supporting_finding_ids": ["f1"],
             "reasoning": "C2 beacon confirmed.",
-            "mitre_techniques": [{"technique_id": "T1071", "technique_name": "Application Layer Protocol"}],
+            "mitre_techniques": [
+                {"technique_id": "T1071", "technique_name": "Application Layer Protocol"}
+            ],
         },
     )
     output = AgentOutput.model_validate(data)
