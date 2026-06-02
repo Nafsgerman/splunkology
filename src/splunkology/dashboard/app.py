@@ -112,7 +112,7 @@ async def _run_investigation(
     elif orchestrator == "gemini":
         from splunkology.orchestrators.gemini_adapter import run_case_gemini as run_case
     elif orchestrator == "haiku":
-        from splunkology.agent.loop import run_case as _run_native
+        from splunkology.agent.loop_v2 import run_case_v2 as _run_native
 
         async def run_case(*args, **kwargs):
             kwargs["model"] = "claude-haiku-4-5"
@@ -138,7 +138,7 @@ async def _run_investigation(
                     _on_event("verdict_reached", {"verdict": "error", "error": result.error})
             return result.report
     else:
-        from splunkology.agent.loop import run_case
+        from splunkology.agent.loop_v2 import run_case_v2 as run_case
 
     evidence = {"data_source": data_source} if data_source else {}
     audit_db = os.path.join(os.path.dirname(__file__), "..", "..", "..", "audit", f"{case_id}.db")
@@ -148,7 +148,7 @@ async def _run_investigation(
         "tool_call_start": "tool_call",
         "tool_call_end": "tool_result",
         "investigation_started": "start",
-        "verdict_reached": "complete",
+        "verdict_reached": "verdict",
         "ioc_detected": "ioc",
         "hypothesis_update": "hypothesis",
     }

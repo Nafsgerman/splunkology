@@ -158,6 +158,14 @@ body{font-family:var(--font);background:var(--gray-50);color:var(--gray-900);hei
 .report-body .md-bq{border-left:3px solid var(--gray-200);padding:4px 0 4px 12px;margin:6px 0;color:var(--gray-700);font-size:12px}
 .report-empty{font-size:13px;color:var(--gray-600)}
 
+.verdict-hero{background:var(--blue-light);border:1px solid #c5d9f9;border-radius:var(--rl);padding:16px 20px;margin-bottom:16px}
+.vh-top{display:flex;align-items:center;justify-content:space-between;margin-bottom:8px}
+.vh-label{font-size:10px;font-weight:500;color:var(--blue-dark);text-transform:uppercase;letter-spacing:.6px}
+.vh-conf{font-family:var(--mono);font-size:12px;font-weight:500;color:var(--blue-dark);background:rgba(26,115,232,.12);padding:3px 10px;border-radius:12px}
+.vh-claim{font-family:var(--display);font-size:18px;font-weight:700;color:var(--gray-900);letter-spacing:-.2px;line-height:1.35}
+.v-sec-title{font-size:11px;font-weight:500;color:var(--gray-600);text-transform:uppercase;letter-spacing:.5px;margin:18px 0 10px}
+.spl-block{margin-bottom:10px}
+.spl-meta{font-family:var(--mono);font-size:11px;color:var(--gray-600);margin-top:4px}
 .ioc-legend{display:flex;gap:18px;margin-bottom:10px;flex-wrap:wrap}
 .ioc-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--gray-700)}
 .ioc-dot{width:10px;height:10px;border-radius:50%}
@@ -349,12 +357,13 @@ function addFinding(type,value,confirmed){
   row.querySelector('.find-val').textContent=value;
   wrap.appendChild(row);
 }
-function addMitre(id){
+function addMitre(id,name){
   if(!id||state.mitre.has(id))return; state.mitre.add(id);
   const grid=document.getElementById('mitre-grid'); const e=grid.querySelector('.mitre-empty'); if(e)grid.innerHTML='';
   const chip=document.createElement('div'); chip.className='mitre-chip';
-  chip.innerHTML='<span class="mitre-id"></span><span class="mitre-name">ATT&CK technique</span>';
+  chip.innerHTML='<span class="mitre-id"></span><span class="mitre-name"></span>';
   chip.querySelector('.mitre-id').textContent=id;
+  chip.querySelector('.mitre-name').textContent=name||'ATT&CK technique';
   grid.appendChild(chip);
   setNavBadge('nav-mitre-badge',String(state.mitre.size),'nb-blue');
 }
@@ -377,6 +386,35 @@ function renderReport(md){
   }
   if(inCode)out.push('<pre class="md-pre">'+esc(buf.join('\n'))+'</pre>'); flush();
   return out.join('');
+}
+function renderVerdictCard(v){
+  const body=document.getElementById('report-body');
+  const conf=(v.confidence!=null)?(Math.round(v.confidence*100)+'%'):'—';
+  const esc=s=>String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  let h='<div class="verdict-hero">';
+  h+='<div class="vh-top"><span class="vh-label">Verdict</span><span class="vh-conf">'+conf+' confidence</span></div>';
+  h+='<div class="vh-claim">'+esc(v.claim)+'</div>';
+  h+='</div>';
+  const techs=v.mitre_techniques||[];
+  if(techs.length){
+    h+='<div class="v-sec-title">MITRE ATT&CK</div><div class="mitre-grid">';
+    techs.forEach(m=>{ h+='<div class="mitre-chip"><span class="mitre-id">'+esc(m.technique_id)+'</span><span class="mitre-name">'+esc(m.technique_name||'ATT&CK technique')+'</span></div>'; });
+    h+='</div>';
+  }
+  const spls=v.spl_evidence||[];
+  if(spls.length){
+    h+='<div class="v-sec-title">Supporting SPL</div>';
+    spls.forEach(s=>{
+      h+='<div class="spl-block"><pre class="md-pre">'+esc(s.spl)+'</pre>';
+      const meta=[];
+      if(s.result_count)meta.push(s.result_count+' events');
+      if(s.job_id)meta.push('job '+esc(s.job_id));
+      if(s.earliest||s.latest)meta.push(esc(s.earliest||'')+' → '+esc(s.latest||''));
+      if(meta.length)h+='<div class="spl-meta">'+meta.join(' · ')+'</div>';
+      h+='</div>';
+    });
+  }
+  body.innerHTML=h;
 }
 function downloadReport(fmt){ if(!state.sessionId){alert('No active session to export');return;} window.location.href='/api/export/'+fmt+'/'+state.sessionId; }
 function handleLaunchBtn(){ if(state.reportReady){showPanel('p-verdict',document.querySelector('.nav-item[data-panel="p-verdict"]'));} else {launchTriage();} }
@@ -430,11 +468,23 @@ async function launchTriage(){
         case 'report': {
           state.reportReady=true;
           let txt=typeof ev.content==='string'?ev.content:JSON.stringify(ev.content,null,2);
-          document.getElementById('report-body').innerHTML=(typeof ev.content==='string')?renderReport(txt):('<pre class="md-pre">'+txt.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</pre>');
+          if(!state.verdictRendered){ document.getElementById('report-body').innerHTML=(typeof ev.content==='string')?renderReport(txt):('<pre class="md-pre">'+txt.replace(/&/g,'&amp;').replace(/</g,'&lt;')+'</pre>'); }
           setNavBadge('nav-verdict-badge','Ready','nb-green');
           document.getElementById('verdict-banner').classList.add('show');
           const b=document.getElementById('launch-btn'); b.disabled=false; document.getElementById('launch-txt').textContent='View Verdict';
           pushTrail('info','✓ Verdict generated by '+(ev.orchestrator_label||ORCH_LABELS[ev.orchestrator]||ev.orchestrator||'agent'));
+          break;
+        }
+        case 'verdict': {
+          if(ev.verdict){
+            (ev.verdict.mitre_techniques||[]).forEach(m=>{ if(m.technique_id){ addMitre(m.technique_id,m.technique_name); addGraphNode('mitre',m.technique_id); } });
+            renderVerdictCard(ev.verdict);
+            state.reportReady=true;
+          }
+          setNavBadge('nav-verdict-badge','Ready','nb-green');
+          document.getElementById('verdict-banner').classList.add('show');
+          const vb=document.getElementById('launch-btn'); vb.disabled=false; document.getElementById('launch-txt').textContent='View Verdict';
+          pushTrail('info','✓ Verdict: '+(ev.claim||(ev.verdict&&ev.verdict.claim)||'reached'));
           break;
         }
         case 'complete': pushTrail('sys','✓ Triage complete · audit log sealed'); setStatus('complete','Complete'); setNavBadge('nav-live-badge','Done','nb-green'); es.close(); state.running=false; stopTimer(); break;

@@ -532,19 +532,23 @@ async def run_case_v2(
             messages.append({"role": "user", "content": tool_results})
 
         # ── Verdict check ────────────────────────────────────────────────────
-        if agent_out and agent_out.next_action.decision == "verdict":
+        if agent_out and (
+            agent_out.next_action.decision == "verdict" or agent_out.verdict is not None
+        ):
             state.terminated_reason = "verdict_reached"
             if on_event:
-                on_event(
-                    "verdict_reached",
-                    {
-                        "run_id": run_id,
-                        "claim": agent_out.verdict.claim if agent_out.verdict else "",
-                        "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
-                        "findings_count": len(state.all_findings),
-                        "total_cost_usd": state.cumulative_cost_usd,
-                    },
-                )
+                _verdict_payload = {
+                    "run_id": run_id,
+                    "claim": agent_out.verdict.claim if agent_out.verdict else "",
+                    "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
+                    "findings_count": len(state.all_findings),
+                    "total_cost_usd": state.cumulative_cost_usd,
+                }
+                if agent_out.verdict is not None:
+                    _verdict_payload["verdict"] = (
+                        agent_out.verdict.to_incident_verdict().model_dump()
+                    )
+                on_event("verdict_reached", _verdict_payload)
             break
 
         if agent_out and agent_out.next_action.decision == "abort":

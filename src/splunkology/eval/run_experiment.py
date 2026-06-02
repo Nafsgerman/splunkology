@@ -111,7 +111,7 @@ async def _dispatch(
             lambda: adapter.run(case_id, preamble + briefing),  # type: ignore[arg-type, return-value]
         )
     elif agent_id == "splunkology-v2":
-        from splunkology.agent.loop import run_case
+        from splunkology.agent.loop_v2 import run_case_v2 as run_case
 
         result = await run_case(  # type: ignore[assignment]
             case_id=case_id,

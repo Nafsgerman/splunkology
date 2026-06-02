@@ -23,7 +23,7 @@ def investigate(
     audit_db: str = typer.Option("./audit/splunkology.db", "--audit-db"),
 ) -> None:
     """Run Splunkology autonomous investigation on a case."""
-    from splunkology.agent.loop import run_case
+    from splunkology.agent.loop_v2 import run_case_v2 as run_case
 
     evidence: dict[str, str] = {}
     if memory:
