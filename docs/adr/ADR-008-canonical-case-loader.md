@@ -60,4 +60,4 @@ The flat registry could not represent a disk-only case cleanly. The manifest for
 
 **Keep flat registry, add disk_image field** — rejected. Would require adding special-case logic for every new evidence type. Manifests are open-schema by design.
 
-**Delete both, use env vars** — rejected. Env vars are not version-controlled and break reproducibility, which is the core claim of the spoliation moat.
+**Delete both, use env vars** — rejected. Env vars are not version-controlled and break reproducibility, which is the core claim of the tamper-evident audit log.

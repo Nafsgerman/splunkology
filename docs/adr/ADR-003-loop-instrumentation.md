@@ -5,7 +5,7 @@
 | Status | Accepted |
 | Date | 2026-05-17 (original) / 2026-05-19 (formalization) |
 | Decision Owner | Nafees A. (Solution Architect, Splunkology) |
-| Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-005 (Analytics Module), ADR-006 (Multi-Orchestrator), ADR-007 (Spoliation Moat) |
+| Related | ADR-001 (Empirical Eval Framework), ADR-002 (Trace Data Model), ADR-005 (Analytics Module), ADR-006 (Multi-Orchestrator), ADR-007 (Tamper-Evident Audit Log) |
 | Supersedes | None |
 
 ---
@@ -163,7 +163,7 @@ A future audit-DB-mode scorer (ADR-009) will join `iteration_snapshot.findings_e
 - ADR-002 — Trace data model (the aggregate view across `iteration_snapshot` rows)
 - ADR-005 — Analytics module (the query layer over this contract)
 - ADR-006 — Multi-orchestrator (the comparability property that depends on this contract)
-- ADR-007 — Spoliation moat (the append-only guarantees this contract relies on)
+- ADR-007 — Tamper-evident audit log (the append-only guarantees this contract relies on)
 - ADR-009 — Scorer source (the future audit-DB-mode scorer that will consume this contract)
 - `src/splunkology/agent/instrumentation.py` — `SnapshotWriter` implementation
 - `migrations/003_iteration_snapshots.sql` — Schema

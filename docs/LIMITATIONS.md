@@ -5,7 +5,7 @@
 | Status | Active — bounds the v1.0 hackathon submission |
 | Date | 2026-05-20 |
 | Owner | Splunkology maintainer |
-| Related | `docs/THREAT_MODEL.md`, `docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md`, `docs/adr/ADR-007-spoliation-moat.md`, `README.md#known-limitations` |
+| Related | `docs/THREAT_MODEL.md`, `docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md`, `docs/adr/ADR-007-tamper-evident-audit-log.md`, `README.md#known-limitations` |
 
 This document maps the surface on which Splunkology's published claims hold, and the surface beyond which they do not. It is companion to `THREAT_MODEL.md`: the threat model enumerates what could go wrong; this document enumerates where the system is not designed to be right. Every claim resolves to code merged at tag `v1.31.0-task16-threat-model` or earlier. Honesty is treated as an engineering property, not a disclaimer.
 
@@ -87,4 +87,4 @@ Each item above has an upstream document that names it, a code path that compile
 
 ---
 
-*This document is the long form. `README.md` §Known Limitations is the short form. `THREAT_MODEL.md` is the adversarial complement. `ADR-006-multi-orchestrator-vendor-lockin.md` §generalization-gap is the upstream source for §2; `ADR-007-spoliation-moat.md` §6 is the upstream source for §7.*
+*This document is the long form. `README.md` §Known Limitations is the short form. `THREAT_MODEL.md` is the adversarial complement. `ADR-006-multi-orchestrator-vendor-lockin.md` §generalization-gap is the upstream source for §2; `ADR-007-tamper-evident-audit-log.md` §6 is the upstream source for §7.*

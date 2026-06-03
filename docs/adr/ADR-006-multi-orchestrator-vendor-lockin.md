@@ -42,7 +42,7 @@ Splunkology ships with **five interchangeable orchestrators**, all consuming the
 
 Three constraints make this list a structural decision rather than a feature checklist:
 
-**C1 — One typed MCP server, no exceptions.** All five orchestrators reach evidence through the identical MCP surface (`registry_persistence`, `mft_scan`, `filesystem_walk`, `volatility_pslist`, etc.). No orchestrator shells out to `vol`, `fls`, `icat`, or `analyzeMFT` directly. Spoliation impossibility — the architectural moat documented in ADR-001 — is enforced at the type level inside the MCP server, not at the agent level. An orchestrator cannot opt out of the moat.
+**C1 — One typed MCP server, no exceptions.** All five orchestrators reach evidence through the identical MCP surface (`registry_persistence`, `mft_scan`, `filesystem_walk`, `volatility_pslist`, etc.). No orchestrator shells out to `vol`, `fls`, `icat`, or `analyzeMFT` directly. Tamper-evidence — the architectural moat documented in ADR-001 — is enforced at the type level inside the MCP server, not at the agent level. An orchestrator cannot opt out of the moat.
 
 **C2 — One trace contract, no exceptions.** Every adapter must emit a `Trace` conforming to the v1.0.0 schema in `src/splunkology/eval/trace.py`. The contract is what makes a 4-iteration OpenAI FC run and an 18-iteration Claude Code run comparable on the same axes: IOC F1, cost-per-verdict, self-correction count, unverified-finding rate. ADR-002 calls this the **single-variable comparison** property: when we change orchestrator, only the orchestrator changes.
 
@@ -102,7 +102,7 @@ Adopt LangGraph as the universal orchestrator and use its provider adapters to s
 
 ### A3 — Multi-vendor without a typed MCP server
 
-Ship adapters that each shell out to forensic tools directly (`subprocess.run(["vol", ...])`), letting the LLM construct command lines. **Rejected.** This breaks C1 — spoliation impossibility — at the architectural level. An LLM that can construct a `vol` command line can construct `rm -rf /cases/`. The typed MCP server exists precisely to make this category of mistake unreachable. Multi-vendor without a typed MCP is a multi-vendor footgun, not a multi-vendor agent.
+Ship adapters that each shell out to forensic tools directly (`subprocess.run(["vol", ...])`), letting the LLM construct command lines. **Rejected.** This breaks C1 — tamper-evidence — at the architectural level. An LLM that can construct a `vol` command line can construct `rm -rf /cases/`. The typed MCP server exists precisely to make this category of mistake unreachable. Multi-vendor without a typed MCP is a multi-vendor footgun, not a multi-vendor agent.
 
 ### A4 — Two orchestrators (native + LangGraph) as a "minimum viable" claim
 

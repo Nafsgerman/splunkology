@@ -144,11 +144,11 @@ def main() -> None:
     missing: list[str] = []
 
     W = 100
-    print(f"\n{'='*W}")
+    print(f"\n{'=' * W}")
     print("T13 — Real Scorer (TEST-001, report-text)")
-    print(f"{'='*W}")
+    print(f"{'=' * W}")
     print(f"{'Agent':<16} {'File':<42} {'TP':>4} {'FN':>4} {'F1':>8}  Status")
-    print(f"{'-'*W}")
+    print(f"{'-' * W}")
 
     for config_dir, agent_id in AGENT_MAP.items():
         label = LABEL_MAP[agent_id]
@@ -169,7 +169,7 @@ def main() -> None:
         print(f"{label} {fname:<42} {tp:>4} {fn:>4} {f1:>8.3f}  OK")
         write_score(data, agent_id, f1, tp, fn, ts)
 
-    print(f"{'='*W}")
+    print(f"{'=' * W}")
 
     if missing:
         total = sum(COST_MAP.get(a, 0.20) for a in missing)

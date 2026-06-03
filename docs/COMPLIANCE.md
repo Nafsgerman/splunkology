@@ -14,7 +14,7 @@ Last verified: 2026-06-10 · Tag: `v1.0.0-hackathon`
 | 6 | Demonstration video | [`docs/devpost/loom_script.md`](./devpost/loom_script.md) → Loom URL: *added at submission* |
 | 7 | Architecture diagram | [`docs/architecture/architecture-v3.svg`](./architecture/architecture-v3.svg) |
 | 8 | Evidence dataset documentation | [`README.md` § Datasets](../README.md#datasets), [`tests/benchmark/ground_truth/`](../tests/benchmark/ground_truth/) |
-| 9 | Accuracy report | [`docs/devpost/SUBMISSION.md` § Accuracy](./devpost/SUBMISSION.md#accuracy), Panel 7 cross-dataset F1, [`docs/adr/ADR-007-spoliation-moat.md`](./adr/ADR-007-spoliation-moat.md), [`tests/spoliation/`](../tests/spoliation/) |
+| 9 | Accuracy report | [`docs/devpost/SUBMISSION.md` § Accuracy](./devpost/SUBMISSION.md#accuracy), Panel 7 cross-dataset accuracy, [`docs/adr/ADR-007-tamper-evident-audit-log.md`](./adr/ADR-007-tamper-evident-audit-log.md), [`tests/audit_integrity/`](../tests/audit_integrity/) |
 | 10 | Agent execution logs | SQLite `auditentry` table (19 columns: timestamps, tokens, cost, args/output SHA256), [`docs/audit_logs/sample_run.json`](./audit_logs/sample_run.json), Dashboard Panel 3 (live SSE) |
 
 ## How to verify each item

@@ -256,9 +256,9 @@ and governance positions taken elsewhere in the project:
 - The accuracy claims in the README, in `THREAT_MODEL.md`, and in
   customer-facing documentation are all backed by experiment runs in
   `experiments/`.
-- The "evidence integrity" claim (no spoliation) is enforced
+- The "audit-trail integrity" claim (no tampering) is enforced
   architecturally (ADR-005) and verified empirically through the
-  spoliation test suite, which runs in the same CI pipeline as the
+  tamper-evidence suite, which runs in the same CI pipeline as the
   framework.
 - The "no hallucinations" claim is operationalised as a measurable
   *hallucination-rejection rate*, computed by `verify_finding()` on every

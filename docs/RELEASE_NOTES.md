@@ -39,7 +39,7 @@ are isolated as the single variable against identical MCP tools and model weight
 |-----|----------|
 | [ADR-001](docs/adr/ADR-001-empirical-evaluation-framework.md) | Empirical evaluation framework |
 | [ADR-006](docs/adr/ADR-006-multi-orchestrator-vendor-lockin.md) | Multi-orchestrator design + vendor lock-in |
-| [ADR-007](docs/adr/ADR-007-spoliation-moat.md) | Append-only spoliation moat |
+| [ADR-007](docs/adr/ADR-007-tamper-evident-audit-log.md) | Append-only tamper-evident audit log |
 
 Orchestrator cost spread: **2.72×** across five paradigms (ADR-006 §5.2). Volatility 3 runs
 against a 5 GB memory image with a file-based cache at `/cases/TEST-001/splunkology_cache/`

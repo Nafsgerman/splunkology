@@ -1,10 +1,10 @@
 """T15: ADR index integrity.
 
-After the T15 ADR-007 reslot (spoliation moat) and ADR-009 rename
+After the T15 ADR-007 reslot (tamper-evident audit log) and ADR-009 rename
 (scorer-audit-db moved off the 007 slot), assert:
 
 1. No two ADR files share a number.
-2. ADR-007 is the spoliation-moat ADR (referenced by README hero + RELEASE_NOTES).
+2. ADR-007 is the tamper-evident-audit-log ADR (referenced by README hero + RELEASE_NOTES).
 3. ADR-009 is the scorer source ADR (renamed from old ADR-007).
 4. All public-facing ADR links in README + RELEASE_NOTES resolve to existing files.
 5. ADR-003 (loop instrumentation) carries the substantive Opus rewrite.
@@ -33,12 +33,12 @@ def test_no_duplicate_adr_numbers() -> None:
     assert len(numbers) == len(set(numbers)), f"Duplicate ADR numbers: {numbers}"
 
 
-def test_adr_007_is_spoliation_moat() -> None:
-    f = ADR_DIR / "ADR-007-spoliation-moat.md"
-    assert f.exists(), "ADR-007-spoliation-moat.md missing (T15 deliverable)"
+def test_adr_007_is_tamper_evident_audit_log() -> None:
+    f = ADR_DIR / "ADR-007-tamper-evident-audit-log.md"
+    assert f.exists(), "ADR-007-tamper-evident-audit-log.md missing (T15 deliverable)"
     body = _read(f)
     assert body.splitlines()[0].startswith("# ADR-007"), "ADR-007 title prefix wrong"
-    assert "spoliation" in body.lower(), "ADR-007 must discuss spoliation"
+    assert "tamper-evident" in body.lower(), "ADR-007 must discuss tamper-evidence"
     assert "append-only" in body.lower(), "ADR-007 must reference append-only DB"
     assert "scorer" not in body.splitlines()[0].lower(), "ADR-007 title must not say 'scorer'"
 

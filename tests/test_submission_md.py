@@ -1,6 +1,6 @@
 """Devpost SUBMISSION.md drift guard (Splunk-era, WIP).
 
-The prior forensic submission (F1 tables, cost-spread metrics, spoliation
+The prior forensic submission (F1 tables, cost-spread metrics, tamper-evidence
 counts, forensic datasets) was a previous project's artifact and has been
 removed. No Splunk/BOTS accuracy numbers exist yet, so this guard asserts
 structure and honest-WIP posture only — never a metric. Re-adding any

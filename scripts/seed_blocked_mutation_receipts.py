@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 Seed 3 blocked mutation receipts into the audit DB so Panel 8 renders authentic data.
-Usage: python3 scripts/seed_spoliation_receipts.py [--db PATH]
+Usage: python3 scripts/seed_blocked_mutation_receipts.py [--db PATH]
 """
 
 import argparse
@@ -36,7 +36,7 @@ RECEIPTS = [
 
 
 def main() -> None:
-    parser = argparse.ArgumentParser(description="Seed spoliation receipts")
+    parser = argparse.ArgumentParser(description="Seed blocked-mutation receipts")
     parser.add_argument(
         "--db",
         default="/cases/TEST-001/splunkology.db",

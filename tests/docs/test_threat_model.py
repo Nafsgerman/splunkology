@@ -65,7 +65,7 @@ def test_out_of_scope_section(text: str) -> None:
 
 def test_references_footer(text: str) -> None:
     assert "## 6. References" in text
-    assert "tests/spoliation/" in text
+    assert "tests/audit_integrity/" in text
     assert "LIMITATIONS.md" in text
 
 

@@ -37,4 +37,4 @@ Adds required `evidence_location` per IOC. Enables per-case scoring honesty when
 - Scorer reads `--ground-truth-version` flag (default v1.1.0)
 
 ## ADR linkage
-ADR-007 (spoliation moat) gains sibling property: **typed tool absence**. Tool capabilities are Pydantic types resolved at case-load time, not runtime hopes. Same root architectural commitment as the spoliation contract.
+ADR-007 (tamper-evident audit log) gains sibling property: **typed tool absence**. Tool capabilities are Pydantic types resolved at case-load time, not runtime hopes. Same root architectural commitment as the tamper-evidence contract.

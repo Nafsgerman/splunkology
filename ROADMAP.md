@@ -23,13 +23,13 @@
 
 ## Phase C.5 — UI Consolidation (T14) ✅
 - ✅ T14  Two-mode dashboard (Results default / Run Live toggle)
-  - 9 result panels: Accuracy, Models, Spoliation, IOC Graph (D3), Datasets, Orch Config, Evidence Chain, Eval, Limitations
+  - 9 result panels: Accuracy, Models, Audit Log, IOC Graph (D3), Datasets, Orch Config, Evidence Chain, Eval, Limitations
   - Live Run: case header + Self-Correction Taxonomy + dark-terminal audit trail
   - Mock streaming fallback — 19 forensic events, metrics tick, status flips green
   - Tag: v1.19.2-task14-v2-merged-modes · 229 passing tests
 
 ## Phase D — Reviewer-Grade Docs (T15–T17)
-- ⏳ T15  Backend wiring + ADR-007 + spoliation seed ← **ACTIVE**
+- ⏳ T15  Backend wiring + ADR-007 + audit-log seed ← **ACTIVE**
   - Wire `launchInvestigation()` fetch → SSE stream → `pushTrail()` / metric counters / taxonomy state
   - ADR-007: audit-DB scorer interface stub (report-text scorer stays active path)
   - ADR-006 §generalization: document LangGraph/ClaudeCode 0.000 as tool config gap
@@ -39,7 +39,7 @@
 - ⏳ T17  LIMITATIONS.md — "When NOT to use Splunkology"
 
 ## Phase E — Production Engineering (T18–T22)
-- ⏳ T18  CI/CD GitHub Actions — tests + spoliation suite + benchmark + coverage ≥80%
+- ⏳ T18  CI/CD GitHub Actions — tests + tamper-evidence suite + benchmark + coverage ≥80%
 - ⏳ T19  Dockerfile + requirements.lock + `make demo` + 5-min cold-clone setup test
 - ⏳ T20  Pydantic strict + mypy strict + ruff pinned, green in CI
 - ⏳ T21  SBOM (syft) + signed v1.0.0-hackathon release tag

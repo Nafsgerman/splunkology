@@ -226,7 +226,7 @@ MIT — see [`LICENSE`](LICENSE).
 
 ## Architecture Decision Records
 
-Design decisions are documented in [`docs/adr/`](docs/adr/). Note: several ADRs are mid-rewrite from forensic to Splunk SOC framing (e.g. ADR-007's "spoliation" → "tamper-evident SOC audit log").
+Design decisions are documented in [`docs/adr/`](docs/adr/). Note: several ADRs are mid-rewrite from forensic to Splunk SOC framing (ADR-007 now complete).
 ## Architecture
 
 ![Splunkology architecture](docs/architecture/architecture.svg)

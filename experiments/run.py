@@ -57,7 +57,7 @@ CASE_BRIEFINGS = {
         "harvesting software, and evidence of war-driving activity."
     ),
     "TEST-004": (
-        "Windows 10 x64 memory image. Focus: registry persistence " "and truncated process names."
+        "Windows 10 x64 memory image. Focus: registry persistence and truncated process names."
     ),
     "TEST-005": (
         "Windows 10 x64 memory image. Focus: full C2 infrastructure "
@@ -113,13 +113,13 @@ async def run_single(
     result_dir = RESULTS_DIR / config["name"] / case_id
     result_dir.mkdir(parents=True, exist_ok=True)
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Config:  {config['name']}")
     print(f"  Case:    {case_id}")
     print(f"  Model:   {config['model']}")
     print(f"  MaxIter: {config['max_iterations']}")
     print(f"  DryRun:  {dry_run}")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     if dry_run:
         return {
@@ -211,9 +211,9 @@ async def run_all(configs: list[dict], dry_run: bool = False) -> list[dict]:
 
 
 def print_summary(results: list[dict]) -> None:
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("  EXPERIMENT MATRIX SUMMARY")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     ok = [r for r in results if r["status"] == "ok"]
     skipped = [r for r in results if r["status"] == "skipped"]
     errors = [r for r in results if r["status"] == "error"]
@@ -224,12 +224,12 @@ def print_summary(results: list[dict]) -> None:
     if errors:
         print("\n  Errors:")
         for r in errors:
-            print(f"    {r['config']} × {r['case_id']}: {r.get('error','')[:80]}")
+            print(f"    {r['config']} × {r['case_id']}: {r.get('error', '')[:80]}")
     if skipped:
         print("\n  Skipped:")
         for r in skipped:
-            print(f"    {r['config']} × {r['case_id']}: {r.get('reason','')}")
-    print(f"{'='*60}\n")
+            print(f"    {r['config']} × {r['case_id']}: {r.get('reason', '')}")
+    print(f"{'=' * 60}\n")
 
 
 def main() -> int:
@@ -245,7 +245,7 @@ def main() -> int:
         print("Available configs:")
         for name in list_configs():
             cfg = load_config(name)
-            print(f"  {name:40s} {cfg.get('description','')[:60]}")
+            print(f"  {name:40s} {cfg.get('description', '')[:60]}")
         return 0
 
     if args.all:

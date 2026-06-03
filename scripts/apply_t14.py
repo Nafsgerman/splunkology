@@ -159,7 +159,7 @@ OLD_PANELS = """    <!-- P1: Accuracy -->
       </div>
     </div>
 
-    <!-- P8: Spoliation -->"""
+    <!-- P8: Tamper-Evident Audit Log -->"""
 
 NEW_PANELS = """    <!-- Accordion: P1+P7 hero (open), P2-P6 collapsed (T14) -->
     <div id="results-accordion" class="accordion-wrap">
@@ -322,7 +322,7 @@ NEW_PANELS = """    <!-- Accordion: P1+P7 hero (open), P2-P6 collapsed (T14) -->
 
     </div><!-- /results-accordion -->
 
-    <!-- P8: Spoliation -->"""
+    <!-- P8: Tamper-Evident Audit Log -->"""
 
 html = replace_once(html, OLD_PANELS, NEW_PANELS, "P1+P7+P2-P6 → accordion")
 
@@ -330,7 +330,7 @@ html = replace_once(html, OLD_PANELS, NEW_PANELS, "P1+P7+P2-P6 → accordion")
 html = replace_once(
     html,
     "<p>Append-only audit DB moat · triggered mutation blocks logged immutably</p>",
-    "<p>Application-layer write discipline · blocked mutation receipts logged · 15/15 spoliation tests green</p>",
+    "<p>Application-layer write discipline · blocked mutation receipts logged · tamper-evidence suite green</p>",
     "p8 header",
 )
 html = replace_once(
