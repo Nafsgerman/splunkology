@@ -159,10 +159,22 @@ async def _run_investigation(
     def on_event(event_type: str, data: dict):
         mapped = _EVENT_MAP.get(event_type, event_type)
         payload = {**data, "event_kind": data.get("type"), "type": mapped}
-        with contextlib.suppress(Exception):
-            _main_loop.call_soon_threadsafe(
-                lambda: _main_loop.create_task(push_event(session_id, payload))
-            )
+
+        def _emit(p=payload):
+            events, queue = get_or_create_session(session_id)
+            p["timestamp"] = datetime.now(UTC).isoformat()
+            events.append(p)
+            queue.put_nowait(p)
+
+        try:
+            on_loop = asyncio.get_running_loop() is _main_loop
+        except RuntimeError:
+            on_loop = False
+        if on_loop:
+            _emit()
+        else:
+            with contextlib.suppress(Exception):
+                _main_loop.call_soon_threadsafe(_emit)
 
     try:
         report = await run_case(
