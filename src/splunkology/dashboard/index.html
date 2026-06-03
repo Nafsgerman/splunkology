@@ -405,7 +405,8 @@ async function launch(){
           else { addGraphNode(kind,val); addEvent('find','Finding · '+esc(kind),'<b>'+esc(val)+'</b><span class="ev-pill '+(confirmed?'pill-conf':'pill-susp')+'">'+(confirmed?'confirmed':'suspected')+'</span>'); }
           break;
         }
-        case 'verdict': { if(ev.verdict){ renderVerdict(ev.verdict); addEvent('done','Verdict reached',esc(ev.verdict.claim||ev.claim||'')); state.reportReady=true; } break; }
+        case 'verdict':
+        case 'verdict_reached': { if(ev.verdict){ renderVerdict(ev.verdict); addEvent('done','Verdict reached',esc(ev.verdict.claim||ev.claim||'')); state.reportReady=true; } break; }
         case 'report': { state.reportReady=true; break; }
         case 'complete': addEvent('done','Triage complete','Investigation finalized · audit log sealed'); setStatus('complete','Complete'); es.close(); state.running=false; stopTimer(); break;
         case 'error': addEvent('find','Error',esc(ev.message||'unknown error')); setStatus('error','Error'); es.close(); state.running=false; stopTimer(); break;
