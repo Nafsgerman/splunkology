@@ -120,18 +120,27 @@ body{
 .rail-link a{color:var(--blue);text-decoration:none}
 
 .main{flex:1;display:flex;flex-direction:column;overflow:hidden}
-.main-title{padding:13px 22px 0;font-family:var(--font);font-size:11px;font-weight:500;color:var(--g700);text-transform:uppercase;letter-spacing:.8px}
-.hypo{margin:11px 22px 0;padding:11px 16px;background:var(--blue-bg);border:1px solid var(--blue-line);border-radius:var(--rl);display:none;align-items:baseline;gap:8px;transition:background .35s;box-shadow:0 0 18px rgba(59,130,246,.1)}
+.main-head{padding:13px 22px 0;flex-shrink:0}
+.main-title{font-family:var(--font);font-size:11px;font-weight:500;color:var(--g700);text-transform:uppercase;letter-spacing:.8px}
+.hypo{margin:11px 0 0;padding:11px 16px;background:var(--blue-bg);border:1px solid var(--blue-line);border-radius:var(--rl);display:none;align-items:baseline;gap:8px;transition:background .35s;box-shadow:0 0 18px rgba(59,130,246,.1)}
 .hypo.show{display:flex}
 .hypo-lbl{font-family:var(--font);font-size:13px;font-weight:700;color:#7eb0ff;white-space:nowrap}
 .hypo-content{font-size:13.5px;color:var(--g900);line-height:1.4}
 .hypo-flash{animation:flash .7s}
 @keyframes flash{0%{background:rgba(59,130,246,.3)}100%{background:var(--blue-bg)}}
 
-.graph-bar{display:flex;justify-content:flex-end;padding:11px 22px 0}
-.graph-btn{padding:8px 13px;font-family:var(--font);font-size:12.5px;font-weight:500;color:var(--g700);background:var(--white);border:1px solid var(--g300);border-radius:var(--r);cursor:pointer;display:flex;align-items:center;gap:8px;transition:background .12s,border-color .12s}
-.graph-btn:hover{background:var(--g100);border-color:var(--blue)} .graph-btn svg{width:15px;height:15px;fill:none;stroke:var(--g600);stroke-width:1.8}
-.graph-btn .ct{font-family:var(--mono);font-size:11px;font-weight:500;background:var(--blue);color:#fff;padding:1px 7px;border-radius:10px}
+.canvas{flex:1;display:flex;min-height:0;overflow:hidden;padding-top:11px}
+.chron-col{flex:0 1 760px;min-width:0;display:flex;flex-direction:column;overflow:hidden}
+.graph-col{flex:1 1 auto;min-width:400px;display:flex;flex-direction:column;border-left:1px solid var(--g200);background:rgba(8,11,18,.45)}
+.graph-col.expanded{position:fixed;inset:0;z-index:100;min-width:0;border-left:none;background:var(--white)}
+.graph-head{flex-shrink:0;display:flex;align-items:center;justify-content:space-between;padding:11px 18px;border-bottom:1px solid var(--g200)}
+.graph-head-l{display:flex;align-items:center;gap:9px;font-family:var(--font);font-size:12.5px;font-weight:500;color:var(--g700);text-transform:uppercase;letter-spacing:.5px}
+.graph-head-l>svg{width:16px;height:16px;fill:none;stroke:var(--g600);stroke-width:1.8}
+.graph-head-l .ct{font-family:var(--mono);font-size:11px;font-weight:500;background:var(--blue);color:#fff;padding:1px 7px;border-radius:10px;text-transform:none}
+.graph-expand{background:var(--surface-2);border:1px solid var(--g300);color:var(--g600);width:30px;height:30px;border-radius:var(--r);cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .12s,border-color .12s,color .12s}
+.graph-expand:hover{background:var(--g100);border-color:var(--blue);color:var(--blue)}
+.graph-expand svg{width:15px;height:15px;fill:none;stroke:currentColor;stroke-width:1.9}
+.graph-body{flex:1;position:relative;min-height:0;background:radial-gradient(80% 80% at 50% 45%,rgba(59,130,246,.06),transparent 70%)}
 
 .chronicle{flex:1;overflow-y:auto;padding:12px 22px 22px}
 .chron-empty{padding:40px 24px;text-align:center;color:var(--g500)}
@@ -164,16 +173,7 @@ body{
 .k-map .ev-dot{background:var(--violet);box-shadow:0 0 8px var(--violet)}.k-map .ev-card{border-left-color:var(--violet)}.k-map .ev-tag{background:var(--violet-bg)}.k-map .ev-tag svg{stroke:var(--violet);fill:none}.k-map .ev-tag-lbl{color:var(--violet)}
 .k-done .ev-dot{background:var(--green);box-shadow:0 0 8px var(--green)}.k-done .ev-card{border-left-color:var(--green)}.k-done .ev-tag{background:var(--green-bg)}.k-done .ev-tag svg{stroke:var(--green);fill:none}.k-done .ev-tag-lbl{color:var(--green)}
 
-.overlay{position:fixed;inset:0;background:rgba(4,6,11,.66);backdrop-filter:blur(2px);display:none;align-items:center;justify-content:center;z-index:100;padding:40px}
-.overlay.show{display:flex}
-.modal{background:var(--white);width:100%;max-width:1000px;height:84vh;border-radius:var(--rl);box-shadow:var(--el2);display:flex;flex-direction:column;overflow:hidden;border:1px solid var(--g200)}
-.modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:16px 22px;border-bottom:1px solid var(--g200)}
-.modal-hdr h2{font-family:var(--font);font-size:18px;font-weight:500;color:var(--g900)}
-.modal-hdr p{font-size:12px;color:var(--g600);margin-top:1px}
-.modal-close{background:none;border:none;cursor:pointer;color:var(--g600);padding:7px;border-radius:50%;display:flex}
-.modal-close:hover{background:var(--g100)}.modal-close svg{width:20px;height:20px;fill:currentColor}
-.modal-body{flex:1;position:relative;background:radial-gradient(80% 80% at 50% 40%,rgba(59,130,246,.05),transparent 70%)}
-.ioc-legend{position:absolute;top:16px;left:20px;display:flex;flex-wrap:wrap;gap:15px;z-index:2}
+.ioc-legend{position:absolute;top:14px;left:18px;display:flex;flex-wrap:wrap;gap:14px;z-index:2}
 .ioc-legend-item{display:flex;align-items:center;gap:6px;font-size:12px;color:var(--g700)}
 .ioc-ld{width:9px;height:9px;border-radius:50%}
 #ioc-svg{width:100%;height:100%;display:block;cursor:grab}#ioc-svg:active{cursor:grabbing}
@@ -268,42 +268,43 @@ body{
   </nav>
 
   <main class="main">
-    <div class="main-title">Execution Chronicle</div>
-    <div class="hypo" id="hypo">
-      <span class="hypo-lbl">CURRENT HYPOTHESIS:</span>
-      <span class="hypo-content" id="hypo-content">Forming initial hypothesis…</span>
-    </div>
-    <div class="graph-bar">
-      <button class="graph-btn" onclick="openGraph()"><svg viewBox="0 0 24 24"><path d="M5 9a3 3 0 100-6 3 3 0 000 6zm14 12a3 3 0 100-6 3 3 0 000 6zM5 21a3 3 0 100-6 3 3 0 000 6zm7-9 6-3M7 7l5 5m0 0-5 5"/></svg>Entity graph<span class="ct" id="graph-ct">0</span></button>
-    </div>
-    <div class="chronicle" id="chronicle">
-      <div class="chron-empty" id="chron-empty">
-        <svg viewBox="0 0 24 24"><path d="M13 2 4.5 12.5h6L9 22l9.5-11.5h-6L13 2z"/></svg>
-        <p>Configure an incident in the left rail and press <b>Start triage</b>.<br>The agent's reasoning, SPL dispatches, findings, and verdict stream here live.</p>
+    <div class="main-head">
+      <div class="main-title">Execution Chronicle</div>
+      <div class="hypo" id="hypo">
+        <span class="hypo-lbl">CURRENT HYPOTHESIS:</span>
+        <span class="hypo-content" id="hypo-content">Forming initial hypothesis…</span>
       </div>
-      <div class="tl" id="tl" style="display:none"></div>
+    </div>
+    <div class="canvas">
+      <section class="chron-col">
+        <div class="chronicle" id="chronicle">
+          <div class="chron-empty" id="chron-empty">
+            <svg viewBox="0 0 24 24"><path d="M13 2 4.5 12.5h6L9 22l9.5-11.5h-6L13 2z"/></svg>
+            <p>Configure an incident in the left rail and press <b>Start triage</b>.<br>The agent's reasoning, SPL dispatches, findings, and verdict stream here live.</p>
+          </div>
+          <div class="tl" id="tl" style="display:none"></div>
+        </div>
+      </section>
+      <section class="graph-col" id="graph-col">
+        <div class="graph-head">
+          <div class="graph-head-l"><svg viewBox="0 0 24 24"><path d="M5 9a3 3 0 100-6 3 3 0 000 6zm14 12a3 3 0 100-6 3 3 0 000 6zM5 21a3 3 0 100-6 3 3 0 000 6zm7-9 6-3M7 7l5 5m0 0-5 5"/></svg>Entity Graph<span class="ct" id="graph-ct">0</span></div>
+          <button class="graph-expand" id="graph-expand-btn" onclick="toggleGraph()" title="Expand / collapse"><svg viewBox="0 0 24 24"><path d="M8 3H5a2 2 0 0 0-2 2v3m18 0V5a2 2 0 0 0-2-2h-3M3 16v3a2 2 0 0 0 2 2h3m13-5v3a2 2 0 0 1-2 2h-3"/></svg></button>
+        </div>
+        <div class="graph-body">
+          <div class="ioc-legend">
+            <div class="ioc-legend-item"><div class="ioc-ld" style="background:#4d8eff"></div>Process</div>
+            <div class="ioc-legend-item"><div class="ioc-ld" style="background:#ff5b52"></div>IP</div>
+            <div class="ioc-legend-item"><div class="ioc-ld" style="background:#b07cff"></div>MITRE</div>
+            <div class="ioc-legend-item"><div class="ioc-ld" style="background:#ffa726"></div>File</div>
+          </div>
+          <div class="ioc-empty-note" id="ioc-empty-note">No entities discovered yet.</div>
+          <svg id="ioc-svg"></svg>
+        </div>
+      </section>
     </div>
   </main>
 </div>
 
-<div class="overlay" id="graph-overlay" onclick="if(event.target===this)closeGraph()">
-  <div class="modal">
-    <div class="modal-hdr">
-      <div><h2>Entity Graph</h2><p>Force-directed · hover for detail · drag to explore</p></div>
-      <button class="modal-close" onclick="closeGraph()"><svg viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="ioc-legend">
-        <div class="ioc-legend-item"><div class="ioc-ld" style="background:#4d8eff"></div>Process</div>
-        <div class="ioc-legend-item"><div class="ioc-ld" style="background:#ff5b52"></div>IP</div>
-        <div class="ioc-legend-item"><div class="ioc-ld" style="background:#b07cff"></div>MITRE</div>
-        <div class="ioc-legend-item"><div class="ioc-ld" style="background:#ffa726"></div>File</div>
-      </div>
-      <div class="ioc-empty-note" id="ioc-empty-note">No entities discovered yet.</div>
-      <svg id="ioc-svg"></svg>
-    </div>
-  </div>
-</div>
 <div class="ioc-tip" id="tooltip"></div>
 
 <script>
@@ -416,9 +417,9 @@ async function launch(){
 
 let iocInited=false,iocNodes=[],iocLinks=[],iocSim=null,iocLinkSel=null,iocNodeSel=null,iocG=null,iocW=900,iocH=500;
 const iocCmap={process:'#4d8eff',ip:'#ff5b52',mitre:'#b07cff',file:'#ffa726',source:'#34d399',registry:'#ffa726',hash:'#ffa726',other:'#838da1'};
-function openGraph(){document.getElementById('graph-overlay').classList.add('show');setTimeout(()=>{iocInited=false;initIOC();},30);}
-function closeGraph(){document.getElementById('graph-overlay').classList.remove('show');}
-function resetGraph(){iocNodes=[];iocLinks=[];iocInited=false;document.getElementById('graph-ct').textContent='0';const svg=d3.select('#ioc-svg');if(svg.node())svg.selectAll('*').remove();}
+function toggleGraph(){const col=document.getElementById('graph-col');col.classList.toggle('expanded');setTimeout(resizeIOC,40);}
+function resizeIOC(){const el=document.getElementById('ioc-svg');if(!el||!iocSim)return;iocW=el.clientWidth||900;iocH=el.clientHeight||500;d3.select('#ioc-svg').attr('viewBox','0 0 '+iocW+' '+iocH);iocSim.force('center',d3.forceCenter(iocW/2,iocH/2));iocSim.force('x',d3.forceX(iocW/2).strength(.04));iocSim.force('y',d3.forceY(iocH/2).strength(.04));iocSim.alpha(.4).restart();}
+function resetGraph(){iocNodes=[];iocLinks=[];iocInited=false;document.getElementById('graph-ct').textContent='0';const svg=d3.select('#ioc-svg');if(svg.node())svg.selectAll('*').remove();initIOC();}
 function iocTick(){if(iocLinkSel)iocLinkSel.attr('x1',d=>d.source.x).attr('y1',d=>d.source.y).attr('x2',d=>d.target.x).attr('y2',d=>d.target.y);if(iocNodeSel)iocNodeSel.attr('transform',d=>'translate('+Math.max(34,Math.min(iocW-34,d.x))+','+Math.max(34,Math.min(iocH-34,d.y))+')');}
 function iocUpdate(){
   if(!iocG)return;
@@ -436,6 +437,7 @@ function iocUpdate(){
 }
 function initIOC(){
   if(iocInited)return; iocInited=true;
+  if(iocSim)iocSim.stop();
   const svg=d3.select('#ioc-svg'); svg.selectAll('*').remove();
   const el=document.getElementById('ioc-svg'); iocW=el.clientWidth||900; iocH=el.clientHeight||500;
   svg.attr('viewBox','0 0 '+iocW+' '+iocH);
@@ -455,6 +457,10 @@ function addGraphNode(type,value){
   iocNodes.push({id,type:t});
   if(iocInited)iocUpdate();
 }
+
+window.addEventListener('load',()=>{initIOC();});
+let _rzT;window.addEventListener('resize',()=>{clearTimeout(_rzT);_rzT=setTimeout(resizeIOC,150);});
+document.addEventListener('keydown',e=>{if(e.key==='Escape'){const c=document.getElementById('graph-col');if(c&&c.classList.contains('expanded')){c.classList.remove('expanded');setTimeout(resizeIOC,40);}}});
 </script>
 </body>
 </html>
