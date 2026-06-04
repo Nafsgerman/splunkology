@@ -10,7 +10,7 @@ from __future__ import annotations
 import os
 import time
 from abc import ABC, abstractmethod
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import Any
 
 import requests
@@ -30,9 +30,11 @@ class SearchResult:
     earliest: str
     latest: str
     events: list[dict[str, Any]]
-    event_count: int
+    event_count: int  # rows returned (capped by result_limit)
+    result_count: int  # total events the job matched (uncapped)
     duration_ms: int
     job_id: str = ""
+    is_truncated: bool = False
 
 
 @dataclass
@@ -59,7 +61,9 @@ class SplunkServerInfo:
 
 class _Transport(ABC):
     @abstractmethod
-    def search(self, spl: str, earliest: str, latest: str) -> SearchResult: ...
+    def search(
+        self, spl: str, earliest: str, latest: str, result_limit: int = 1000
+    ) -> SearchResult: ...
 
     @abstractmethod
     def list_indexes(self) -> list[IndexInfo]: ...
@@ -101,23 +105,30 @@ class _RestTransport(_Transport):
         r.raise_for_status()
         return r.json()
 
-    def search(self, spl: str, earliest: str = "-24h", latest: str = "now") -> SearchResult:
+    def _job_info(self, sid: str) -> dict:
+        data = self._get(f"/services/search/jobs/{sid}")
+        return data["entry"][0]["content"]
+
+    def search(
+        self, spl: str, earliest: str = "-24h", latest: str = "now", result_limit: int = 1000
+    ) -> SearchResult:
         t0 = time.monotonic()
 
-        # Create job
         job = self._post(
             "/services/search/jobs",
             {
                 "search": spl if spl.startswith("search ") else f"search {spl}",
                 "earliest_time": earliest,
                 "latest_time": latest,
-                "exec_mode": "blocking",  # wait for completion
+                "exec_mode": "blocking",
             },
         )
         sid = job["sid"]
 
-        # Fetch results (up to 1000 events — enough for SOC triage)
-        results = self._get(f"/services/search/jobs/{sid}/results", {"count": 1000})
+        info = self._job_info(sid)
+        result_count = int(info.get("resultCount", 0))
+
+        results = self._get(f"/services/search/jobs/{sid}/results", {"count": result_limit})
         events = results.get("results", [])
 
         return SearchResult(
@@ -126,8 +137,10 @@ class _RestTransport(_Transport):
             latest=latest,
             events=events,
             event_count=len(events),
+            result_count=result_count,
             duration_ms=int((time.monotonic() - t0) * 1000),
             job_id=sid,
+            is_truncated=result_count > len(events),
         )
 
     def list_indexes(self) -> list[IndexInfo]:
@@ -184,9 +197,11 @@ class SplunkClient:
 
     # -- Core search ---------------------------------------------------------
 
-    def search(self, spl: str, earliest: str = "-24h", latest: str = "now") -> SearchResult:
+    def search(
+        self, spl: str, earliest: str = "-24h", latest: str = "now", result_limit: int = 1000
+    ) -> SearchResult:
         """Run SPL query, return typed SearchResult."""
-        return self._t.search(spl, earliest, latest)
+        return self._t.search(spl, earliest, latest, result_limit)
 
     # -- Discovery -----------------------------------------------------------
 
