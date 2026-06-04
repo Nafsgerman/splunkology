@@ -20,3 +20,6 @@ src/siftguard/dashboard/tools/
 .claude/
 .env
 *.zip
+botsv3_data_set/
+runs/
+.env.tmp

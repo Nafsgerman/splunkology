@@ -1,0 +1,117 @@
+{
+  "dataset": "botsv3",
+  "subset": "attack_chain",
+  "note": "Analyst-verified attack-chain checkpoints derived from the official BOTS v3 key. BOTS v3 is one continuous dataset; every checkpoint is reachable, so applicable == total. Trivia questions are out of scope for triage and excluded by design.",
+  "checkpoints": [
+    {
+      "id": "cp-rce-entry-vector",
+      "category": "initial_access",
+      "bots_question": "Q333",
+      "claim": "Initial access via Apache Struts OGNL RCE on the public-facing web server.",
+      "requires": "either",
+      "expected_mitre": ["T1190"],
+      "expected_indicators": ["struts", "ognl"]
+    },
+    {
+      "id": "cp-cve-struts",
+      "category": "initial_access",
+      "bots_question": "Q333",
+      "claim": "Struts RCE is CVE-2017-9791 (S2-048), the Showcase/Struts1-plugin vector.",
+      "requires": "indicator",
+      "expected_indicators": ["cve-2017-9791"]
+    },
+    {
+      "id": "cp-backdoor-uid0",
+      "category": "execution",
+      "bots_question": "Q333",
+      "claim": "Post-exploitation backdoor runs as tomcat7 with UID=0.",
+      "requires": "either",
+      "expected_mitre": ["T1505.003", "T1059"],
+      "expected_indicators": ["tomcat7", "uid=0", "backdoor"]
+    },
+    {
+      "id": "cp-kernel-lpe",
+      "category": "privilege_escalation",
+      "bots_question": "Q328",
+      "claim": "Local privilege escalation to root via kernel exploit.",
+      "requires": "either",
+      "expected_mitre": ["T1068"],
+      "expected_indicators": ["kernel", "privilege escalation"]
+    },
+    {
+      "id": "cp-cve-lpe",
+      "category": "privilege_escalation",
+      "bots_question": "Q332",
+      "claim": "Kernel LPE is CVE-2017-16995 (eBPF verifier).",
+      "requires": "indicator",
+      "expected_indicators": ["cve-2017-16995"]
+    },
+    {
+      "id": "cp-iam-abuse",
+      "category": "persistence",
+      "bots_question": "Q200",
+      "claim": "IAM abuse via the web_admin identity.",
+      "requires": "either",
+      "expected_mitre": ["T1078", "T1098"],
+      "expected_indicators": ["web_admin"]
+    },
+    {
+      "id": "cp-cryptomining",
+      "category": "impact",
+      "bots_question": "Q200",
+      "claim": "AWS resource hijacking — RunInstances launching cryptomining instances.",
+      "requires": "either",
+      "expected_mitre": ["T1496"],
+      "expected_indicators": ["runinstances", "cryptomining", "mining"]
+    },
+    {
+      "id": "cp-c2-present",
+      "category": "command_and_control",
+      "bots_question": "Q323",
+      "claim": "Command-and-control channel from compromised endpoints.",
+      "requires": "either",
+      "expected_mitre": ["T1071"],
+      "expected_indicators": ["command and control", "beacon", "c2 "]
+    },
+    {
+      "id": "cp-c2-endpoint",
+      "category": "command_and_control",
+      "bots_question": "Q323",
+      "claim": "C2 is a reverse shell to 45.77.53.176:8088 via /tmp/backpipe.",
+      "requires": "indicator",
+      "expected_indicators": ["45.77.53.176", "backpipe", "8088"]
+    },
+    {
+      "id": "cp-win-phish",
+      "category": "initial_access_windows",
+      "bots_question": "Q310",
+      "claim": "Windows initial access via malicious .xlsm phishing attachment.",
+      "requires": "indicator",
+      "expected_indicators": [".xlsm", "xlsm"]
+    },
+    {
+      "id": "cp-win-hdoor",
+      "category": "execution_windows",
+      "bots_question": "Q317",
+      "claim": "Windows backdoor binary hdoor.exe executed.",
+      "requires": "indicator",
+      "expected_indicators": ["hdoor.exe", "hdoor"]
+    },
+    {
+      "id": "cp-win-svcvnc",
+      "category": "persistence_windows",
+      "bots_question": "Q304",
+      "claim": "Windows persistence via the svcvnc service.",
+      "requires": "indicator",
+      "expected_indicators": ["svcvnc"]
+    },
+    {
+      "id": "cp-win-cred",
+      "category": "credential_access_windows",
+      "bots_question": "Q320",
+      "claim": "Credential access — password Password123! recovered.",
+      "requires": "indicator",
+      "expected_indicators": ["password123"]
+    }
+  ]
+}
