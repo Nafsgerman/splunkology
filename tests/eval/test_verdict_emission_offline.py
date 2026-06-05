@@ -96,3 +96,47 @@ def test_emission_chain_dumps_scorable_verdict(tmp_path):
     report = score(verdict, load_checkpoints(DEFAULT_CHECKPOINTS))
     assert report.hits >= 3
     assert report.applicable == 13
+
+
+FORCED_SYNTHESIS_RESPONSE = """
+## Executive Summary
+Struts RCE, AWS metadata credential theft, web_admin IAM abuse, RunInstances cryptomining.
+
+```json
+{
+  "iteration_summary": "Final synthesis turn, no tools.",
+  "findings": [],
+  "hypotheses": [],
+  "next_action": {"decision": "verdict", "tool_to_call": null, "rationale": "Concluding."},
+  "verdict": {
+    "claim": "Struts RCE to AWS metadata credential theft, web_admin IAM abuse, and RunInstances cryptomining.",
+    "confidence": 0.72,
+    "supporting_finding_ids": [],
+    "reasoning": "Initial access, cloud credential theft, IAM abuse, and resource hijacking are all evidenced in indexed events.",
+    "mitre_techniques": [
+      {"technique_id": "T1190", "technique_name": "Exploit Public-Facing Application"},
+      {"technique_id": "T1078", "technique_name": "Valid Accounts"},
+      {"technique_id": "T1496", "technique_name": "Resource Hijacking"}
+    ],
+    "spl_evidence": [
+      {"spl": "index=botsv3 sourcetype=stream:http dest_ip=169.254.169.254"},
+      {"spl": "index=botsv3 sourcetype=aws:cloudtrail eventName=RunInstances"}
+    ]
+  }
+}
+```
+"""
+
+
+def test_forced_synthesis_empty_arrays_parses_and_dumps(tmp_path):
+    out, err = parse_agent_output(FORCED_SYNTHESIS_RESPONSE)
+    assert err is None, err
+    assert out.verdict is not None
+    assert out.verdict.supporting_finding_ids == []
+    iv = out.verdict.to_incident_verdict()
+    path = tmp_path / "v.json"
+    path.write_text(json.dumps(iv.model_dump(), indent=2), encoding="utf-8")
+    report = score(
+        json.loads(path.read_text(encoding="utf-8")), load_checkpoints(DEFAULT_CHECKPOINTS)
+    )
+    assert report.hits >= 3

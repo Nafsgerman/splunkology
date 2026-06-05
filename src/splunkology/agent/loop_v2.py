@@ -281,6 +281,25 @@ async def run_case_v2(
         console.print(f"\n[dim]── Iteration {iteration + 1}/{_max_iter} ──[/dim]")
 
         _force_synthesis = iteration == _max_iter - 1
+        if _force_synthesis:
+            messages.append(
+                {
+                    "role": "user",
+                    "content": (
+                        "FINAL TURN. No tools are available and no more searches will run. "
+                        "Do not ask for more searches. Conclude now from the evidence you have.\n\n"
+                        "Write the incident report under '## Executive Summary' and the other "
+                        "required headers, then append the JSON block. In that JSON: set findings "
+                        "to [], set next_action.decision to 'verdict', set "
+                        "verdict.supporting_finding_ids to [], set verdict.confidence to a float "
+                        "between 0.30 and 1.00, and populate verdict.claim, verdict.reasoning, "
+                        "verdict.mitre_techniques (objects with technique_id and technique_name), "
+                        "and verdict.spl_evidence (objects each with an 'spl' field naming a search "
+                        "you ran). With findings [] and supporting_finding_ids [], no cross-field "
+                        "checks apply — the only requirements are the field types just listed."
+                    ),
+                }
+            )
         _create_kwargs: dict[str, Any] = {
             "model": model,
             "max_tokens": 8192,
@@ -368,13 +387,15 @@ async def run_case_v2(
                 retry_msg = build_retry_message(error or "")
                 messages.append({"role": "user", "content": retry_msg})
                 # Edit 2: line 290 (in retry client.messages.create call)
-                retry_resp = client.messages.create(
-                    model=model,
-                    max_tokens=8192,  # was 4096
-                    system=system_prompt,
-                    tools=TOOL_SCHEMAS,  # type: ignore[arg-type]
-                    messages=messages,  # type: ignore[arg-type]
-                )
+                _retry_kwargs: dict[str, Any] = {
+                    "model": model,
+                    "max_tokens": 8192,
+                    "system": system_prompt,
+                    "messages": messages,
+                }
+                if not _force_synthesis:
+                    _retry_kwargs["tools"] = TOOL_SCHEMAS
+                retry_resp = client.messages.create(**_retry_kwargs)  # type: ignore[arg-type]
                 retry_text = _extract_text_blocks(retry_resp.content)
                 agent_out, error2 = parse_agent_output(retry_text)
                 if agent_out is None:
