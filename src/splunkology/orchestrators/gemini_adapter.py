@@ -223,7 +223,7 @@ async def run_case_gemini(
                             "tool": tool_name,
                             "outcome": outcome,
                             "summary": summary,
-                            "findings_count": len(result.findings or []),
+                            "findings_count": len(all_findings),
                             "duration_ms": duration_ms,
                         },
                     )
