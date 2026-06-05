@@ -222,11 +222,11 @@ async def tool_node(state: AgentState) -> dict:
             on_event(
                 "tool_call_end",
                 {
-                    "tool": tool_call.name,
-                    "outcome": result.outcome.value,
-                    "summary": result.summary,
-                    "duration_ms": result.duration_ms,
-                    "iteration": state["iter_count"],
+                    "tool": tool_name,
+                    "outcome": outcome,
+                    "summary": summary,
+                    "findings_count": len(all_findings),
+                    "duration_ms": duration_ms,
                 },
             )
 

@@ -236,11 +236,11 @@ async def run_case_openai_fc(
                     on_event(
                         "tool_call_end",
                         {
-                            "tool": tc.function.name,
-                            "outcome": result.outcome.value,
-                            "summary": result.summary,
-                            "duration_ms": result.duration_ms,
-                            "iteration": iter_count,
+                            "tool": tool_name,
+                            "outcome": outcome,
+                            "summary": summary,
+                            "findings_count": len(all_findings),
+                            "duration_ms": duration_ms,
                         },
                     )
 
