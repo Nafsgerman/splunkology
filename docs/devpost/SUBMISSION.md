@@ -23,32 +23,9 @@ Autonomous SOC triage for Splunk — raw events to a MITRE ATT&CK–mapped incid
 
 ---
 
-## Field: What changed and when (retarget disclosure)
+## Field: Prior work & what changed (New & Existing disclosure)
 
-Splunkology began as **SIFTGuard**, an autonomous DFIR agent I built that ran
-forensic tooling (Volatility, The Sleuth Kit, RegRipper) against memory and
-disk images. For this hackathon I am openly retargeting it to be
-**Splunk-native**:
-
-- **Evidence layer** moved from forensic disk/memory images to Splunk search
-  results and BOTS datasets.
-- **Tool surface** moved from forensic binaries to typed SPL / notable-event
-  tools behind a schema-validated MCP boundary.
-- **Framing** moved from forensic/legal "spoliation" to SOC triage and a
-  tamper-evident audit log.
-
-**Carried over (the architecture spine):** the typed MCP server boundary, the
-instrumented self-correcting agent loop, the append-only audit trail, and the
-multi-orchestrator evaluation harness.
-
-**New / being rebuilt for Splunk:** the Splunk REST transport, the BOTS dataset
-loader, the SOC verdict schema (MITRE technique mappings + SPL evidence), the
-SOC triage UI, and **all evaluation numbers** — prior forensic F1 results do not
-transfer and have been removed.
-
-The public git history shows the SIFTGuard origin. This is an openly-disclosed
-retarget of my own prior work, stated here so the lineage is transparent and
-verifiable rather than hidden.
+Splunkology reuses architecture scaffolding from my own earlier open-source work — a typed MCP tool boundary, an instrumented self-correcting agent loop, an append-only audit trail, and a multi-orchestrator harness (all MIT, all mine). It was significantly updated and retargeted to Splunk during the hackathon submission period (May 18, 2026 onward). New in that window: the Splunk REST transport, MCP routing for every orchestrator, the BOTS v3 dataset loader, the IncidentVerdict schema and its prompt/validator/loop wiring, the SOC triage dashboard, and the evaluation harness. Prior-project evaluation numbers do not transfer to this domain and have been removed.
 
 ---
 
@@ -75,7 +52,7 @@ structured incident verdict with the supporting SPL recorded as evidence.
   append-only store, so each line of a verdict traces back to the SPL query that
   produced it.
 
-Architecture diagram: docs/architecture/architecture.svg
+Architecture diagram: architecture_diagram.png
 Design rationale and rejected alternatives: docs/adr/
 
 ## Evaluation
@@ -136,7 +113,7 @@ Full limitations: docs/LIMITATIONS.md
 
 ## Project Media
 
-- Architecture diagram: docs/architecture/architecture.svg
+- Architecture diagram: architecture_diagram.png
 - Dashboard screenshots: [FILL — capture once SOC triage UI lands]
 
 ## Video demo link

@@ -1,4 +1,4 @@
-"""Idempotent schema migrator for SIFTGuard.
+"""Idempotent schema migrator for Splunkology.
 
 Usage:
     python -m scripts.migrate --db audit/CASE-001.db
@@ -146,7 +146,7 @@ MIGRATIONS = [
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description="SIFTGuard schema migrator")
+    parser = argparse.ArgumentParser(description="Splunkology schema migrator")
     parser.add_argument("--db", required=True, help="Path to SQLite DB")
     parser.add_argument("--dry-run", action="store_true")
     parser.add_argument("--verify", action="store_true", help="Only verify schema, do not apply")

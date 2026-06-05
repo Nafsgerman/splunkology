@@ -45,7 +45,7 @@ Core ideas:
 | Live runs against BOTS v3 | Captured |
 | Demo video (< 3 min) | In progress |
 
-Test suite: `266 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
+Test suite: `260 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
 
 ---
 

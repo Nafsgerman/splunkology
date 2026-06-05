@@ -1,5 +1,5 @@
 """
-SIFTGuard Benchmark Scorer
+Splunkology Benchmark Scorer
 Computes precision, recall, F1 for IOC detection and section completeness.
 """
 

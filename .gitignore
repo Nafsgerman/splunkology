@@ -24,3 +24,5 @@ botsv3_data_set/
 runs/
 .env.tmp
 .coverage
+.claude/
+experiments/analysis/
