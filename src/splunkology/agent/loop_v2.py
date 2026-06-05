@@ -280,14 +280,16 @@ async def run_case_v2(
         state.completed_iterations = iteration + 1
         console.print(f"\n[dim]── Iteration {iteration + 1}/{_max_iter} ──[/dim]")
 
-        # Edit 1: line 233 (in main client.messages.create call)
-        response = client.messages.create(
-            model=model,
-            max_tokens=8192,  # was 4096
-            system=system_prompt,
-            tools=TOOL_SCHEMAS,  # type: ignore[arg-type]
-            messages=messages,  # type: ignore[arg-type]
-        )
+        _force_synthesis = iteration == _max_iter - 1
+        _create_kwargs: dict[str, Any] = {
+            "model": model,
+            "max_tokens": 8192,
+            "system": system_prompt,
+            "messages": messages,
+        }
+        if not _force_synthesis:
+            _create_kwargs["tools"] = TOOL_SCHEMAS
+        response = client.messages.create(**_create_kwargs)  # type: ignore[arg-type]
 
         tokens_in = response.usage.input_tokens
         tokens_out = response.usage.output_tokens
@@ -332,7 +334,12 @@ async def run_case_v2(
         messages.append({"role": "assistant", "content": assistant_content})
 
         # ── Early exit: substantial report written, even if response truncated ──
-        if final_report and "## Executive Summary" in final_report and len(final_report) > 1500:
+        if (
+            final_report
+            and "## Executive Summary" in final_report
+            and len(final_report) > 1500
+            and not (not tool_calls_made and is_v2_response(response_text))
+        ):
             if on_event:
                 on_event(
                     "verdict_reached",
@@ -380,21 +387,26 @@ async def run_case_v2(
                         }
                     )
         elif tool_calls_made:
-            # Tool-calling turn — build minimal AgentOutput from tool calls.
-            # v2 JSON verdict appears only on the final synthesis turn.
+            # Tool-calling turn — the model is instructed to emit the JSON block
+            # on every turn, so parse it to capture findings accumulated this
+            # turn. Fall back to a minimal shell only when no block is present.
             from splunkology.agent.output_schema import NextAction
 
-            agent_out = AgentOutput(
-                iteration_summary=f"Tool calls: {[t.name for t in tool_calls_made]}",
-                findings=[],
-                hypotheses=[],
-                next_action=NextAction(
-                    decision="continue",
-                    tool_to_call=None,
-                    rationale="Tool-calling turn — continuing investigation.",
-                ),
-                verdict=None,
-            )
+            agent_out = None
+            if is_v2_response(response_text):
+                agent_out, _err = parse_agent_output(response_text)
+            if agent_out is None:
+                agent_out = AgentOutput(
+                    iteration_summary=f"Tool calls: {[t.name for t in tool_calls_made]}",
+                    findings=[],
+                    hypotheses=[],
+                    next_action=NextAction(
+                        decision="continue",
+                        tool_to_call=None,
+                        rationale="Tool-calling turn — continuing investigation.",
+                    ),
+                    verdict=None,
+                )
         else:
             agent_out = _synthesize_v1_fallback(response_text, iteration)
 

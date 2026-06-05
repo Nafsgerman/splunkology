@@ -68,7 +68,7 @@ async def _main() -> None:
         verdict_path.write_text(json.dumps(captured["verdict"], indent=2), encoding="utf-8")
         print(f"\nverdict dumped: {verdict_path}")
     else:
-        print("\nNo structured verdict emitted this run (report-based exit). Nothing to score.")
+        print("\nNo structured verdict captured this run. Nothing to score.")
 
     print("\n" + "=" * 70)
     print(f"run_id: {run_id}")

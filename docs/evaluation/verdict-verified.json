@@ -1,0 +1,21 @@
+{
+  "claim": "BOTS v3 (Frothly) breach: initial access via Apache Struts OGNL RCE (CVE-2017-9791) on the public-facing web server; a backdoor ran as tomcat7 with UID=0; local privilege escalation to root via kernel exploit (CVE-2017-16995); the web_admin identity was abused for AWS RunInstances cryptomining; command-and-control was a reverse shell to 45.77.53.176:8088 via /tmp/backpipe. A parallel Windows chain (svcvnc persistence, Password123! credential access, .xlsm phishing, hdoor.exe backdoor) is part of the documented scenario.",
+  "confidence": 0.74,
+  "mitre_techniques": [
+    {"technique_id": "T1190", "technique_name": "Exploit Public-Facing Application", "confidence": 0.9},
+    {"technique_id": "T1505.003", "technique_name": "Server Software Component: Web Shell", "confidence": 0.8},
+    {"technique_id": "T1068", "technique_name": "Exploitation for Privilege Escalation", "confidence": 0.8},
+    {"technique_id": "T1078", "technique_name": "Valid Accounts", "confidence": 0.7},
+    {"technique_id": "T1496", "technique_name": "Resource Hijacking", "confidence": 0.85},
+    {"technique_id": "T1071", "technique_name": "Application Layer Protocol", "confidence": 0.7}
+  ],
+  "spl_evidence": [
+    {"spl": "index=botsv3 sourcetype=stream:http struts ognl", "result_count": 0, "earliest": "0", "latest": "now", "job_id": ""},
+    {"spl": "index=botsv3 RunInstances web_admin", "result_count": 0, "earliest": "0", "latest": "now", "job_id": ""},
+    {"spl": "index=botsv3 dest_ip=45.77.53.176 dest_port=8088", "result_count": 0, "earliest": "0", "latest": "now", "job_id": ""}
+  ],
+  "_meta": {
+    "source": "analyst-verified reference verdict, derived from the official BOTS v3 answer key; not a live agent capture",
+    "verified_against": "official BOTS v3 key (attack-chain subset)"
+  }
+}
