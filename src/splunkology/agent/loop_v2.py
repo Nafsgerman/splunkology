@@ -357,6 +357,7 @@ async def run_case_v2(
             final_report
             and "## Executive Summary" in final_report
             and len(final_report) > 1500
+            and not _force_synthesis
             and not (not tool_calls_made and is_v2_response(response_text))
         ):
             if on_event:
