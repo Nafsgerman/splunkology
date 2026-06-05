@@ -9,7 +9,6 @@ Tools exposed to the agent loop:
 from __future__ import annotations
 
 import asyncio
-import os
 
 from mcp.server import Server
 from mcp.server.stdio import stdio_server
@@ -21,11 +20,7 @@ app = Server("splunkology-mcp")
 
 
 def _client() -> SplunkClient:
-    return SplunkClient(
-        base_url=os.environ.get("SPLUNK_URL", "https://localhost:8089"),
-        username=os.environ.get("SPLUNK_USER", "admin"),
-        password=os.environ["SPLUNK_PASS"],
-    )
+    return SplunkClient()
 
 
 TOOLS = [

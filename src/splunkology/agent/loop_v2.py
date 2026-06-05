@@ -45,6 +45,8 @@ from splunkology.agent.prompts import load_prompt
 from splunkology.audit.log import AuditLog
 from splunkology.models.soc import SocResult, ToolOutcome
 from splunkology.splunk.client import SplunkClient
+from splunkology.mcp_server.client import dispatcher as _mcp_dispatcher
+from splunkology.mcp_server.client import mcp_enabled as _mcp_enabled
 
 logger = logging.getLogger(__name__)
 console = Console()
@@ -105,6 +107,9 @@ class V2RunState:
 
 
 async def _dispatch_tool(name: str, args: dict) -> SocResult:
+    if _mcp_enabled():
+        return await _mcp_dispatcher.call(name, args)
+
     import time
 
     t0 = time.monotonic()
