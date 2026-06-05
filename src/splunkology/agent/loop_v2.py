@@ -43,10 +43,10 @@ from splunkology.agent.output_validator import (
 )
 from splunkology.agent.prompts import load_prompt
 from splunkology.audit.log import AuditLog
-from splunkology.models.soc import SocResult, ToolOutcome
-from splunkology.splunk.client import SplunkClient
 from splunkology.mcp_server.client import dispatcher as _mcp_dispatcher
 from splunkology.mcp_server.client import mcp_enabled as _mcp_enabled
+from splunkology.models.soc import SocResult, ToolOutcome
+from splunkology.splunk.client import SplunkClient
 
 logger = logging.getLogger(__name__)
 console = Console()

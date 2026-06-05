@@ -19,7 +19,7 @@ Splunkology
 
 ## Field: Elevator pitch (tagline)
 
-Splunk-native autonomous incident triage — swappable LLM orchestrators over a typed Splunk tool layer, every step recorded in a tamper-evident audit log. Retargeted from the SIFTGuard DFIR engine.
+Autonomous SOC triage for Splunk — raw events to a MITRE ATT&CK–mapped incident verdict, with no analyst in the loop.
 
 ---
 

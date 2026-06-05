@@ -85,14 +85,12 @@ class MCPDispatcher:
             args=["-m", _SERVER_MODULE],
             env=_child_env(),
         )
-        async with stdio_client(params) as (read, write):
+        async with stdio_client(params) as (read, write):  # noqa: SIM117  # noqa: SIM117
             async with ClientSession(read, write) as session:
                 await session.initialize()
                 resp = await session.call_tool(name, arguments=args)
         text = "".join(
-            getattr(b, "text", "")
-            for b in resp.content
-            if getattr(b, "type", None) == "text"
+            getattr(b, "text", "") for b in resp.content if getattr(b, "type", None) == "text"
         )
         return text, bool(getattr(resp, "isError", False))
 

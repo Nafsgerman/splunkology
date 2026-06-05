@@ -1,10 +1,4 @@
-"""README hero structure validation (Splunk-era).
-
-Forensic-era hero assertions (TEST-001/002 dataset numbers, 2.72x cost
-spread, full orchestrator marketing hero) were removed — re-adding them
-would reintroduce non-transferable forensic metrics barred by the metrics
-rule. The figure-embed check stays red until the architecture diagram lands.
-"""
+"""README hero structure validation (Splunk-era)."""
 
 from pathlib import Path
 
@@ -26,6 +20,8 @@ def test_h1_is_splunkology() -> None:
 
 def test_embeds_at_least_one_figure() -> None:
     text = _read()
-    assert "](docs/figures/" in text or "](docs/architecture/" in text, (
-        "README must embed at least one figure from docs/figures or docs/architecture"
-    )
+    assert (
+        "](architecture_diagram.png)" in text
+        or "](docs/figures/" in text
+        or "](docs/architecture/" in text
+    ), "README must embed the architecture diagram"

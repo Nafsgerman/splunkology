@@ -42,6 +42,7 @@ async def push_event(session_id: str, event: dict) -> None:
     events.append(event)
     await queue.put(event)
 
+
 def _coerce_verdict(v):
     """Normalize any verdict payload into the IncidentVerdict.model_dump() shape renderVerdict expects."""
     if v is None:
@@ -64,6 +65,7 @@ def _coerce_verdict(v):
         v.setdefault("spl_evidence", [])
         return v
     return {"claim": str(v), "confidence": None, "mitre_techniques": [], "spl_evidence": []}
+
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
@@ -167,7 +169,10 @@ async def _run_investigation(
                 else:
                     _on_event(
                         "verdict_reached",
-                        {"verdict": {"claim": "Investigation failed", "confidence": None}, "error": result.error},
+                        {
+                            "verdict": {"claim": "Investigation failed", "confidence": None},
+                            "error": result.error,
+                        },
                     )
             return result.report
     else:

@@ -1,11 +1,4 @@
-"""Devpost SUBMISSION.md drift guard (Splunk-era, WIP).
-
-The prior forensic submission (F1 tables, cost-spread metrics, tamper-evidence
-counts, forensic datasets) was a previous project's artifact and has been
-removed. No Splunk/BOTS accuracy numbers exist yet, so this guard asserts
-structure and honest-WIP posture only — never a metric. Re-adding any
-fabricated number here is a barred submission claim.
-"""
+"""Devpost SUBMISSION.md drift guard (Splunk-era)."""
 
 from pathlib import Path
 
@@ -14,9 +7,8 @@ SUB = REPO_ROOT / "docs" / "devpost" / "SUBMISSION.md"
 README = REPO_ROOT / "README.md"
 
 TAGLINE = (
-    "Splunk-native autonomous incident triage — swappable LLM orchestrators "
-    "over a typed Splunk tool layer, every step recorded in a tamper-evident "
-    "audit log. Retargeted from the SIFTGuard DFIR engine."
+    "Autonomous SOC triage for Splunk — raw events to a MITRE ATT&CK–mapped "
+    "incident verdict, with no analyst in the loop."
 )
 
 
