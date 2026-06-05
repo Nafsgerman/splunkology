@@ -41,7 +41,7 @@ Core ideas:
 | BOTS v3 dataset loader | Done |
 | SOC verdict schema (`IncidentVerdict`: MITRE techniques + SPL evidence) | Wired through prompt → validator → loop; emits `verdict-<uuid>.json` |
 | SOC triage dashboard (verdict rail, SSE) | Functional |
-| Architecture diagram | Committed — `docs/architecture/architecture.svg` |
+| Architecture diagram | Committed — `architecture_diagram.png` |
 | Live runs against BOTS v3 | Captured |
 | Demo video (< 3 min) | In progress |
 
@@ -91,7 +91,7 @@ python3 -m pytest -q
 
 ## Architecture
 
-![Splunkology architecture](docs/architecture/architecture.svg)
+![Splunkology architecture](architecture_diagram.png)
 
 Browser → FastAPI dashboard → swappable orchestrator dispatch → native agent loop (`loop_v2`) → typed MCP tool boundary → Splunk REST → Splunk platform, with a tamper-evident SQLite audit trail recording every step. The MCP boundary is schema-validated: the agent can only call defined Splunk tools, never free-form shell or raw SPL injection. The dashed node marks planned Splunk-native AI integration (Hosted Models / AI Assistant) reachable over the same REST seam.
 
