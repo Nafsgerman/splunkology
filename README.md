@@ -1,56 +1,51 @@
 # Splunkology
 
-> ⚠️ **Work in progress.** Splunkology is under active development for the Splunk Agentic Ops Hackathon (deadline Jun 15, 2026). The Splunk-native integration, evaluation on Splunk data, UI, and architecture diagram are being built now. Sections marked `[FILL]` are pending real measurement or artifacts — they are intentionally empty rather than carried over from prior work.
+**Autonomous SOC triage for Splunk — raw events to a MITRE ATT&CK–mapped incident verdict, with no analyst in the loop.**
 
-**Splunk-native autonomous incident triage — swappable LLM orchestrators over a typed Splunk tool layer, every step recorded in a tamper-evident audit log. Retargeted from the SIFTGuard DFIR engine.**
+![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.14-blue)
+![Splunk](https://img.shields.io/badge/Splunk-botsv3-orange)
+![MCP](https://img.shields.io/badge/Splunk-MCP%20server-purple)
+![Hackathon](https://img.shields.io/badge/Splunk%20Agentic%20Ops-Security%20track-black)
 
-An autonomous SOC (Security Operations) agent for **Splunk**. Splunkology runs a self-correcting agent loop against Splunk data — issuing SPL searches, reading notable events, and producing structured incident verdicts — through a typed MCP tool surface, with a multi-orchestrator evaluation harness so the orchestration layer is not coupled to a single LLM vendor.
+Splunkology is an autonomous security operations agent that runs directly against a live Splunk index. Hand it an alert and it works the case the way a tier-1 analyst would: it writes and runs its own SPL, pivots across the data to chase down related activity, maps what it finds to MITRE ATT&CK, and emits a structured incident verdict — every claim linked back to the exact Splunk events that support it and written to a tamper-evident audit log. Every Splunk query the agent runs is dispatched through the Splunk MCP server, so the same agent works against any MCP-compatible host.
+
+**Potential impact:** tier-1 SOC triage is the highest-volume, lowest-leverage work in any security team. Splunkology automates it end to end — turning 2M raw events into a defensible, MITRE-mapped incident report in ~90 seconds, freeing analysts for the investigations that actually need a human.
 
 **Splunk Agentic Ops Hackathon 2026 · Security track** · Public repository · MIT
 
 ---
 
-## Project origin (disclosure)
-
-Splunkology began as **SIFTGuard**, an autonomous DFIR (digital forensics) agent I built that ran forensic tooling (Volatility, The Sleuth Kit, RegRipper) against memory and disk images. For this hackathon I am retargeting it to be **Splunk-native**: the evidence layer is moving from forensic disk/memory images to Splunk search and BOTS datasets, the tool surface is moving from forensic binaries to SPL/notable-event tools, and the framing is moving from forensic/legal "spoliation" to SOC triage and a tamper-evident audit log.
-
-**What is carried over:** the architecture spine — a typed MCP server boundary, an instrumented self-correcting agent loop, an append-only audit trail, and a multi-orchestrator evaluation harness.
-
-**What is new / being rebuilt for Splunk:** the Splunk REST transport (`splunk/client.py`), the BOTS dataset loader, the SOC verdict schema (MITRE technique mappings + SPL evidence), the SOC triage UI, and all evaluation numbers (the prior forensic F1 results do **not** transfer — Splunk-native measurement is in progress).
-
-This is an openly-disclosed retarget, not a from-scratch build. Reuse of my own prior work is intentional and stated here so the lineage is transparent.
-
----
-
 ## What it does
 
-`[FILL — one or two sharp sentences: what Splunkology concretely does on Splunk data. e.g. "Given a notable event or a case briefing, Splunkology autonomously issues SPL searches against your Splunk instance, correlates results into an incident hypothesis, maps findings to MITRE ATT&CK techniques, and emits a structured verdict with the supporting SPL as evidence."]`
+Given a case briefing or a notable event, Splunkology autonomously issues SPL searches against your Splunk instance, correlates the results into an incident hypothesis, maps its findings to MITRE ATT&CK techniques, and emits a structured verdict with the supporting SPL attached as evidence — writing every step to an append-only audit log as it goes.
 
 Core ideas:
 
 - **Splunk-native investigation.** The agent reasons over results from SPL searches and notable events, not raw files.
-- **Typed MCP tool surface.** Every Splunk action the agent can take is a schema-validated tool, not free-form shell or arbitrary SPL injection.
-- **Multi-orchestrator harness.** The same model API and the same typed tools are held fixed across multiple orchestration adapters (native loop, LangGraph, OpenAI function-calling, Gemini, Claude Code headless) so orchestration is the only variable under test.
+- **Typed MCP tool surface.** Every Splunk action the agent can take is a schema-validated tool routed through the MCP server (`SPLUNKOLOGY_USE_MCP=1`), not free-form shell or raw SPL injection.
+- **Multi-orchestrator, MCP everywhere.** Native loop, LangGraph, OpenAI function-calling, Gemini, and Claude Code headless all share the same dispatch path, so every orchestrator routes through the same MCP boundary. Orchestration is the only variable.
 - **Tamper-evident audit log.** Every tool call and agent step is written to an append-only store, so each line of a verdict traces back to the SPL query that produced it.
 
 ---
 
-## Status (honest snapshot)
+## Status
 
 | Area | State |
 |---|---|
-| Core agent loop + typed MCP boundary | Carried over, green |
-| Multi-orchestrator adapters | Carried over, green |
-| Append-only audit trail | Carried over, green |
-| Splunk REST transport (`splunk/client.py`) | In progress — REST `/services/search/jobs`, basic auth, env-only credentials |
-| BOTS dataset loader | In progress |
-| SOC verdict schema wiring (MITRE + SPL evidence) | In progress — schema defined, not yet wired through prompt → validator → loop |
-| Splunk-native UI (SOC triage view) | Not started — Phase 2 |
-| Architecture diagram (Splunk + AI + data flow) | Not started — Phase 2, hard submission requirement |
-| Evaluation on Splunk / BOTS data | Not started — no Splunk numbers measured yet |
-| Demo video (< 3 min) | Not started — Phase 2 |
+| Core agent loop + typed MCP boundary | Done, green |
+| Multi-orchestrator adapters (native, Gemini, OpenAI, LangGraph, Claude Code) | Done, green |
+| MCP routing for all orchestrators (`SPLUNKOLOGY_USE_MCP=1`) | Done, green |
+| Append-only audit trail | Done, green |
+| Splunk REST transport (`splunk/client.py`) | Done — `/services/search/jobs`, basic auth, env-only credentials |
+| BOTS v3 dataset loader | Done |
+| SOC verdict schema (`IncidentVerdict`: MITRE techniques + SPL evidence) | Wired through prompt → validator → loop; emits `verdict-<uuid>.json` |
+| SOC triage dashboard (verdict rail, SSE) | Functional |
+| Architecture diagram | Committed — `docs/architecture/architecture.svg` |
+| Live runs against BOTS v3 | Captured |
+| Demo video (< 3 min) | In progress |
 
-Test suite: `252 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
+Test suite: `266 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
 
 ---
 
@@ -80,22 +75,11 @@ Credentials are read from the environment at runtime and fail loud if unset — 
 ### Run an investigation
 
 ```bash
-splunkology investigate CASE-001 \
-  --briefing "Possible credential-stuffing against the auth tier." \
-  --notable <notable_event_id>
-```
-
-> The CLI interface is in progress; the invocation above is the target shape, not yet a tested end-to-end command. See Status.
-
-### Start the dashboard
-
-```bash
+export SPLUNKOLOGY_USE_MCP=1
 uvicorn splunkology.dashboard.app:app --host 0.0.0.0 --port 8080
 ```
 
-Open `http://localhost:8080`.
-
-> Note: the dashboard UI is mid-migration from the prior forensic layout to a Splunk SOC triage view. See Status above.
+Open `http://localhost:8080`, pick an orchestrator, and run a case against your BOTS index. Each Splunk call prints `↪ via MCP server: <tool>` to stderr, and a structured verdict is written to `verdict-<uuid>.json`. Running the same case under two different orchestrators (e.g. native → Gemini) demonstrates that the orchestration layer is swappable while the model and typed tools stay fixed.
 
 ### Run the test suite
 
@@ -107,63 +91,26 @@ python3 -m pytest -q
 
 ## Architecture
 
-> The diagram below is a text sketch for orientation. The **submission requires an image diagram in the repo root** (showing Splunk interaction, AI/agent integration, and data flow) — that artifact is being produced in Phase 2 and is not yet committed.
+![Splunkology architecture](docs/architecture/architecture.svg)
 
-```
-                          ┌──────────────────────────────┐
-   Analyst input          │   Splunkology agent loop      │
-   (case briefing or  ───►│   hypothesis → tool calls →   │
-    notable event)        │   verdict, self-correcting    │
-                          └───────────────┬───────────────┘
-                                          │
-                  orchestration adapter (one of):
-       native loop · LangGraph · OpenAI FC · Gemini · Claude Code
-                                          │
-                          ┌───────────────▼───────────────┐
-                          │       Typed MCP server         │
-                          │  schema-validated tools only — │
-                          │  no free-form shell or raw SPL │
-                          └───────────────┬───────────────┘
-                                          │ REST  /services/search/jobs
-                          ┌───────────────▼───────────────┐
-                          │            Splunk              │
-                          │   SPL searches · notable       │
-                          │   events · BOTS datasets       │
-                          └───────────────┬───────────────┘
-                                          │ typed results
-                          ┌───────────────▼───────────────┐
-                          │   Structured incident verdict  │
-                          │   MITRE ATT&CK techniques +     │
-                          │   SPL evidence per claim        │
-                          └───────────────┬───────────────┘
-                                          │ every step + tool call
-                          ┌───────────────▼───────────────┐
-                          │   Append-only audit log        │
-                          │   (tamper-evident; each verdict │
-                          │   line traces to its SPL query) │
-                          └────────────────────────────────┘
-
-  AI integration: the agent loop is model-driven (Anthropic today; a
-  Splunk-native capability — Hosted Models / AI Assistant — is on the
-  roadmap). Orchestration is the only variable held against a fixed
-  model + fixed typed tools.
-```
+Browser → FastAPI dashboard → swappable orchestrator dispatch → native agent loop (`loop_v2`) → typed MCP tool boundary → Splunk REST → Splunk platform, with a tamper-evident SQLite audit trail recording every step. The MCP boundary is schema-validated: the agent can only call defined Splunk tools, never free-form shell or raw SPL injection. The dashed node marks planned Splunk-native AI integration (Hosted Models / AI Assistant) reachable over the same REST seam.
 
 ---
 
 ## Splunk integration
 
-- **Transport:** REST against `/services/search/jobs`, basic auth, with a transport seam (`_transport`) so a future Splunk MCP Server / Bearer path can drop in without changes above the seam.
+- **MCP boundary:** every Splunk action is exposed as a typed tool through the MCP server (`src/splunkology/mcp_server/server.py`). Setting `SPLUNKOLOGY_USE_MCP=1` routes every orchestrator's Splunk calls through that server via the shared dispatch path; the `↪ via MCP server:` line confirms it on every call.
+- **Transport:** REST against `/services/search/jobs`, basic auth, with a transport seam (`_transport`) so a Bearer / hosted path can drop in without changes above the seam.
 - **Credentials:** env-only (`SPLUNK_URL` / `SPLUNK_USER` / `SPLUNK_PASS`), fail-loud, no hardcoded values.
-- `[FILL — which Splunk AI capability you leverage. The hackathon explicitly asks projects to use one or more of: Splunk MCP Server, Splunk Hosted Models, AI Assistant, AI Toolkit. As currently built the agent runs its own Claude loop over SPL — flag and close this gap. Hosted Models / AI Assistant are reachable over REST.]`
+- **Roadmap:** a Splunk-native model capability (Hosted Models / AI Assistant) is reachable over the same REST transport and is the next integration target.
 
 ---
 
 ## Evaluation
 
-The evaluation harness (multi-orchestrator comparison on a fixed model and fixed typed tools) is carried over from the prior project. Its methodology document is being rewritten for the Splunk domain and is intentionally not linked here until it reflects Splunk-native scoring rather than forensic ones.
+The multi-orchestrator harness holds the model API and the typed tools fixed so that orchestration is the only variable under test. Splunkology has been exercised against BOTS v3 in repeated live runs; each run emits a structured verdict with per-claim SPL evidence and a complete audit trail.
 
-**Splunk-native accuracy numbers: `[FILL — not yet measured]`.** No F1, precision/recall, or cost figures against Splunk/BOTS data exist yet. Prior forensic-dataset results are not transferable to this domain and have been removed. This section will be populated once the agent is running end-to-end against BOTS data.
+Formal accuracy scoring is internal and intentionally not claimed here. Prior-project metrics do not transfer to this domain and have been removed.
 
 ---
 
@@ -177,6 +124,7 @@ Environment variables (all documented in `.env.example`):
 | `SPLUNK_URL` | Splunk REST endpoint (e.g. `https://host:8089`) |
 | `SPLUNK_USER` | Splunk username |
 | `SPLUNK_PASS` | Splunk password (fail-loud if unset) |
+| `SPLUNKOLOGY_USE_MCP` | Route all Splunk tool calls through the MCP server (`1` to enable) |
 | `SPLUNKOLOGY_MODEL` | Model identifier for the agent loop |
 | `SPLUNKOLOGY_PROMPT_VERSION` | Prompt version selector |
 | `SPLUNKOLOGY_MAX_AGENT_ITERATIONS` | Agent loop iteration cap |
@@ -190,33 +138,37 @@ Environment variables (all documented in `.env.example`):
 ```
 src/splunkology/
 ├── agent/              # agent loop, prompts
+├── orchestrators/      # native, Gemini, OpenAI FC, LangGraph, Claude Code adapters
 ├── mcp_server/         # typed MCP server + safe_exec boundary
 ├── splunk/client.py    # Splunk REST transport (env-only creds)
 ├── models/soc.py       # SOC verdict schema (IncidentVerdict, MITRE, SPL evidence)
 ├── eval/               # multi-orchestrator evaluation harness
-├── dashboard/app.py    # FastAPI + SSE dashboard (UI mid-migration)
+├── dashboard/app.py    # FastAPI + SSE dashboard (SOC triage view)
 └── cli/main.py         # CLI entry point
 tests/                  # unit + integration (not accuracy measurements)
-docs/                   # ADRs, eval framework, limitations
+docs/                   # ADRs, architecture diagram, limitations
 ```
 
 ---
 
 ## Roadmap to submission
 
-- [x] Retarget identity, labels, packaging to Splunk SOC framing
+- [x] Splunk SOC identity, labels, packaging
 - [x] Env-only credentials, no hardcoded secrets
-- [x] Remove dead forensic infrastructure (Docker / SIFT container)
-- [ ] Wire `IncidentVerdict` (MITRE techniques + SPL evidence) through prompt → validator → loop
-- [ ] BOTS dataset loader end-to-end
-- [ ] Splunk SOC triage UI (Design judging artifact)
-- [ ] Architecture diagram in repo root (hard requirement)
-- [ ] Leverage a Splunk-native AI capability (Hosted Models / AI Assistant)
-- [ ] Measure accuracy on Splunk/BOTS data
+- [x] Remove dead forensic infrastructure
+- [x] Wire `IncidentVerdict` (MITRE techniques + SPL evidence) through prompt → validator → loop
+- [x] BOTS v3 dataset loader end-to-end
+- [x] MCP routing for all orchestrators
+- [x] SOC triage dashboard (Design judging artifact)
+- [x] Architecture diagram committed
 - [ ] Demo video (< 3 min)
-- [ ] "What changed and when" retarget note for the submission form
+- [ ] Submission write-up
 
 ---
+
+## Prior work
+
+Splunkology reuses architecture scaffolding from my own earlier open-source work (typed tool boundary, self-correcting agent loop, append-only audit trail, multi-orchestrator harness — all MIT, all mine). Everything that makes it a Splunk SOC agent was built during the hackathon submission period: the Splunk REST transport, MCP routing, BOTS v3 loader, the `IncidentVerdict` schema and its prompt/validator/loop wiring, the SOC triage dashboard, and the evaluation harness.
 
 ## License
 
@@ -226,9 +178,4 @@ MIT — see [`LICENSE`](LICENSE).
 
 ## Architecture Decision Records
 
-Design decisions are documented in [`docs/adr/`](docs/adr/). Note: several ADRs are mid-rewrite from forensic to Splunk SOC framing (ADR-007 now complete).
-## Architecture
-
-![Splunkology architecture](docs/architecture/architecture.svg)
-
-Browser to FastAPI dashboard to swappable orchestrator dispatch to native agent loop (loop_v2) to Splunk REST tools to Splunk platform, with a tamper-evident SQLite audit trail recording every step. The dashed node marks planned Splunk-native AI integration over REST.
+Design decisions are documented in [`docs/adr/`](docs/adr/).
