@@ -29,9 +29,9 @@ def test_tagline_matches_readme_hero() -> None:
 
 def test_discloses_prior_work() -> None:
     text = _read().lower()
-    assert (
-        "prior work" in text or "reuse" in text or "significantly updated" in text
-    ), "submission must disclose prior-work reuse (New & Existing rule)"
+    assert "prior work" in text or "reuse" in text or "significantly updated" in text, (
+        "submission must disclose prior-work reuse (New & Existing rule)"
+    )
 
 
 def test_no_fabricated_metrics() -> None:
