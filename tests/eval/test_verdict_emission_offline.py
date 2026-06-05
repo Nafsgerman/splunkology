@@ -140,3 +140,12 @@ def test_forced_synthesis_empty_arrays_parses_and_dumps(tmp_path):
         json.loads(path.read_text(encoding="utf-8")), load_checkpoints(DEFAULT_CHECKPOINTS)
     )
     assert report.hits >= 3
+
+
+def test_forced_synthesis_report_plus_json_still_scores(tmp_path):
+    out, err = parse_agent_output(FORCED_SYNTHESIS_RESPONSE)
+    assert err is None, err
+    assert out.verdict is not None
+    iv = out.verdict.to_incident_verdict()
+    report = score(iv.model_dump(), load_checkpoints(DEFAULT_CHECKPOINTS))
+    assert report.applicable == 13
