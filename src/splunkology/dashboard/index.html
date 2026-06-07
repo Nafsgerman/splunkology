@@ -208,7 +208,6 @@ body{
   <div class="lb-field lb-brief"><label>Briefing</label><input id="f-brief" value="Suspected C2 over DNS. Confirm beaconing, map to ATT&CK, return a verdict."></div>
   <div class="lb-field lb-orch"><label>Orchestrator</label>
     <select id="f-orch">
-      <option value="mock">Mock run (UI test)</option>
       <option value="native">Native Claude (Sonnet)</option>
       <option value="haiku">Native (Haiku)</option>
       <option value="openai-fc">OpenAI FC</option>
@@ -309,7 +308,7 @@ body{
 
 <script>
 const state={running:false,startedAt:null,timerId:null,iter:0,spl:0,find:0,ent:0,toolTimes:[],sessionId:null,caseId:null,reportReady:false,verdictRendered:false,mitre:new Set()};
-const ORCH_LABELS={mock:'Mock run',native:'Native Claude (Sonnet 4.5)',haiku:'Native (Haiku 4.5)','openai-fc':'OpenAI FC (gpt-5.5)',langgraph:'LangGraph (Sonnet 4.5)',gemini:'Gemini 3 Pro',claudecode:'Claude Code (headless)'};
+const ORCH_LABELS={native:'Native Claude (Sonnet 4.5)',haiku:'Native (Haiku 4.5)','openai-fc':'OpenAI FC (gpt-5.5)',langgraph:'LangGraph (Sonnet 4.5)',gemini:'Gemini 3 Pro',claudecode:'Claude Code (headless)'};
 
 function setStatus(s,t){const el=document.getElementById('hdr-status');el.className='hdr-status '+s;document.getElementById('hdr-status-txt').textContent=t;}
 function startTimer(){state.startedAt=Date.now();state.timerId=setInterval(()=>{const s=Math.floor((Date.now()-state.startedAt)/1000);document.getElementById('hdr-timer').textContent=String(Math.floor(s/60)).padStart(2,'0')+':'+String(s%60).padStart(2,'0');},1000);}
