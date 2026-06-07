@@ -502,6 +502,21 @@ async def run_case_v2(
         if response.stop_reason == "end_turn" and not tool_calls_made:
             if final_report:
                 state.terminated_reason = "verdict_reached"
+                if on_event:
+                    _vp = {
+                        "run_id": run_id,
+                        "claim": agent_out.verdict.claim
+                        if (agent_out and agent_out.verdict)
+                        else "Investigation complete",
+                        "confidence": agent_out.verdict.confidence
+                        if (agent_out and agent_out.verdict)
+                        else None,
+                        "findings_count": len(state.all_findings),
+                        "total_cost_usd": state.cumulative_cost_usd,
+                    }
+                    if agent_out and agent_out.verdict is not None:
+                        _vp["verdict"] = agent_out.verdict.to_incident_verdict().model_dump()
+                    on_event("verdict_reached", _vp)
                 break
             messages.append(
                 {
