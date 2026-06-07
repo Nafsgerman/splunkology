@@ -406,7 +406,7 @@ async function launch(){
           break;
         }
         case 'verdict':
-        case 'verdict_reached': { if(ev.verdict && !state.verdictRendered){ renderVerdict(ev.verdict); addEvent('done','Verdict reached',esc(ev.verdict.claim||ev.claim||'')); state.reportReady=true; } break; }
+        case 'verdict_reached': { if(!state.verdictRendered){ state.verdictRendered=true; if(ev.verdict){ renderVerdict(ev.verdict); } addEvent('done','Verdict reached',esc((ev.verdict&&ev.verdict.claim)||ev.claim||'')); state.reportReady=true; } break; }
         case 'report': { state.reportReady=true; break; }
         case 'complete': addEvent('done','Triage complete','Investigation finalized · audit log sealed'); setStatus('complete','Complete'); es.close(); state.running=false; stopTimer(); break;
         case 'error': addEvent('find','Error',esc(ev.message||'unknown error')); setStatus('error','Error'); es.close(); state.running=false; stopTimer(); break;
