@@ -10,7 +10,7 @@
 
 Splunkology is an autonomous security operations agent that runs directly against a live Splunk index. Hand it an alert and it works the case the way a tier-1 analyst would: it writes and runs its own SPL, pivots across the data to chase down related activity, maps what it finds to MITRE ATT&CK, and emits a structured incident verdict — every claim linked back to the exact Splunk events that support it and written to a tamper-evident audit log. Every Splunk query the agent runs is dispatched through the Splunk MCP server, so the same agent works against any MCP-compatible host.
 
-**Potential impact:** tier-1 SOC triage is the highest-volume, lowest-leverage work in any security team. Splunkology automates it end to end — turning 2M raw events into a defensible, MITRE-mapped incident report in ~90 seconds, freeing analysts for the investigations that actually need a human.
+**Potential impact:** tier-1 SOC triage is the highest-volume, lowest-leverage work in any security team. Splunkology automates it end to end — turning 2M raw events into a defensible, MITRE-mapped incident report in ~2-3 minutes, freeing analysts for the investigations that actually need a human.
 
 **Splunk Agentic Ops Hackathon 2026 · Security track** · Public repository · MIT
 
