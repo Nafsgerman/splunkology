@@ -43,9 +43,9 @@ Core ideas:
 | SOC triage dashboard (verdict rail, SSE) | Functional |
 | Architecture diagram | Committed — `architecture_diagram.png` |
 | Live runs against BOTS v3 | Captured |
-| Demo video (< 3 min) | In progress |
+| Demo video (< 3 min) | Done |
 
-Test suite: `260 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
+Test suite: `293 passed` locally (`python3 -m pytest -q`). These are unit/integration tests of the harness and tooling; they are **not** accuracy measurements against Splunk data.
 
 ---
 
@@ -161,8 +161,8 @@ docs/                   # ADRs, architecture diagram, limitations
 - [x] MCP routing for all orchestrators
 - [x] SOC triage dashboard (Design judging artifact)
 - [x] Architecture diagram committed
-- [ ] Demo video (< 3 min)
-- [ ] Submission write-up
+- [x] Demo video (< 3 min)
+- [x] Submission write-up
 
 ---
 
