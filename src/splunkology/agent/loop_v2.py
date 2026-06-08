@@ -323,6 +323,11 @@ async def run_case_v2(
         state.completed_iterations = iteration + 1
         console.print(f"\n[dim]── Iteration {iteration + 1}/{_max_iter} ──[/dim]")
 
+        if on_event:
+            on_event(
+                "iteration_progress",
+                {"iteration": iteration, "phase": "thinking", "of": _max_iter},
+            )
         _force_synthesis = iteration == _max_iter - 1
         if _force_synthesis:
             messages.append(
@@ -343,6 +348,20 @@ async def run_case_v2(
                     ),
                 }
             )
+        if _force_synthesis and on_event:
+            on_event(
+                "iteration_complete",
+                {
+                    "iteration": iteration,
+                    "findings_count": len(state.all_findings),
+                    "iocs_count": len(
+                        [f for f in state.all_findings if f.get("type") in IOC_TYPES]
+                    ),
+                    "cumulative_cost_usd": state.cumulative_cost_usd,
+                    "note": "synthesizing final verdict",
+                },
+            )
+
         _create_kwargs: dict[str, Any] = {
             "model": model,
             "max_tokens": 8192,

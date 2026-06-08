@@ -196,7 +196,6 @@ async def run_case_openai_fc(
     def _emit_verdict(claim_fallback: str, text: str, agent_out: AgentOutput | None) -> None:
         nonlocal verdict_emitted
         if verdict_emitted or not on_event:
-            verdict_emitted = True
             return
         if agent_out is not None and agent_out.verdict is not None:
             verdict = agent_out.verdict.to_incident_verdict().model_dump()
@@ -207,6 +206,8 @@ async def run_case_openai_fc(
                     findings=all_findings,
                     claim_fallback=claim_fallback,
                 )
+        if not isinstance(verdict, dict):
+            verdict = {"claim": claim_fallback, "confidence": None}
         on_event(
             "verdict_reached",
             {
