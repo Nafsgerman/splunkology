@@ -101,6 +101,7 @@ class V2RunState:
     cumulative_cost_usd: float = 0.0
     all_findings: list[dict] = field(default_factory=list)
     all_hypotheses: list[dict] = field(default_factory=list)
+    spl_searches: list[dict] = field(default_factory=list)
     run_start_ms: float = field(default_factory=time.time)
     terminated_reason: str = "max_iterations"
     completed_iterations: int = 0
@@ -163,6 +164,41 @@ async def _dispatch_tool(name: str, args: dict) -> SocResult:
         )
 
 
+def _native_verdict_payload(
+    state: V2RunState,
+    agent_out: AgentOutput | None,
+    response_text: str,
+    claim_fallback: str,
+) -> dict:
+    """Build a verdict_reached payload that always carries a structured verdict.
+
+    Guarantees the dashboard rail populates on *every* exit path — clean parse,
+    report-based early exit, or end_turn — by harvesting from the parsed
+    AgentOutput, the raw response text, or accumulated findings/SPL searches.
+    """
+    from splunkology.agent.verdict_bridge import harvest_verdict
+
+    structured = None
+    if agent_out is not None and agent_out.verdict is not None:
+        structured = agent_out.verdict.to_incident_verdict().model_dump()
+
+    verdict = harvest_verdict(
+        findings=state.all_findings,
+        spl_evidence=state.spl_searches,
+        structured=structured,
+        parsed_text=response_text,
+        claim_fallback=claim_fallback,
+    )
+    return {
+        "run_id": state.run_id,
+        "claim": verdict.get("claim") or claim_fallback,
+        "confidence": verdict.get("confidence"),
+        "findings_count": len(state.all_findings),
+        "total_cost_usd": state.cumulative_cost_usd,
+        "verdict": verdict,
+    }
+
+
 def _extract_text_blocks(content: list) -> str:
     return "\n".join(
         block.text for block in content if hasattr(block, "type") and block.type == "text"
@@ -185,7 +221,7 @@ def _synthesize_v1_fallback(response_text: str, iteration: int) -> AgentOutput:
         findings=[],
         hypotheses=[],
         next_action=NextAction(
-            decision="continue",
+            decision="verdict",
             tool_to_call=None,
             rationale="v1 fallback — schema parse failed",
         ),
@@ -279,6 +315,8 @@ async def run_case_v2(
         )
 
     final_report = ""
+    verdict_emitted = False
+    response_text = ""
     iter_wall_start = time.time()
 
     for iteration in range(_max_iter):
@@ -368,14 +406,14 @@ async def run_case_v2(
             if on_event:
                 on_event(
                     "verdict_reached",
-                    {
-                        "run_id": run_id,
-                        "claim": "Investigation complete (report-based exit)",
-                        "confidence": None,
-                        "findings_count": len(state.all_findings),
-                        "total_cost_usd": state.cumulative_cost_usd,
-                    },
+                    _native_verdict_payload(
+                        state,
+                        None,
+                        response_text,
+                        "Investigation complete (report-based exit)",
+                    ),
                 )
+                verdict_emitted = True
             state.terminated_reason = "verdict_reached"
             break
 
@@ -503,20 +541,18 @@ async def run_case_v2(
             if final_report:
                 state.terminated_reason = "verdict_reached"
                 if on_event:
-                    _vp = {
-                        "run_id": run_id,
-                        "claim": agent_out.verdict.claim
-                        if (agent_out and agent_out.verdict)
-                        else "Investigation complete",
-                        "confidence": agent_out.verdict.confidence
-                        if (agent_out and agent_out.verdict)
-                        else None,
-                        "findings_count": len(state.all_findings),
-                        "total_cost_usd": state.cumulative_cost_usd,
-                    }
-                    if agent_out and agent_out.verdict is not None:
-                        _vp["verdict"] = agent_out.verdict.to_incident_verdict().model_dump()
-                    on_event("verdict_reached", _vp)
+                    on_event(
+                        "verdict_reached",
+                        _native_verdict_payload(
+                            state,
+                            agent_out,
+                            response_text,
+                            agent_out.verdict.claim
+                            if (agent_out and agent_out.verdict)
+                            else "Investigation complete",
+                        ),
+                    )
+                    verdict_emitted = True
                 break
             messages.append(
                 {
@@ -543,6 +579,19 @@ async def run_case_v2(
                     )
 
                 result = await _dispatch_tool(tool_call.name, tool_call.input)
+
+                if tool_call.name == "splunk_search":
+                    _spl = tool_call.input.get("spl")
+                    if _spl:
+                        _raw = result.raw if isinstance(result.raw, dict) else {}
+                        _events = _raw.get("events")
+                        state.spl_searches.append(
+                            {
+                                "spl": _spl,
+                                "result_count": len(_events) if isinstance(_events, list) else None,
+                                "job_id": _raw.get("job_id"),
+                            }
+                        )
 
                 # Audit row with all new columns populated
                 audit.record(
@@ -591,18 +640,16 @@ async def run_case_v2(
         ):
             state.terminated_reason = "verdict_reached"
             if on_event:
-                _verdict_payload = {
-                    "run_id": run_id,
-                    "claim": agent_out.verdict.claim if agent_out.verdict else "",
-                    "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
-                    "findings_count": len(state.all_findings),
-                    "total_cost_usd": state.cumulative_cost_usd,
-                }
-                if agent_out.verdict is not None:
-                    _verdict_payload["verdict"] = (
-                        agent_out.verdict.to_incident_verdict().model_dump()
-                    )
-                on_event("verdict_reached", _verdict_payload)
+                on_event(
+                    "verdict_reached",
+                    _native_verdict_payload(
+                        state,
+                        agent_out,
+                        response_text,
+                        agent_out.verdict.claim if agent_out.verdict else "Investigation complete",
+                    ),
+                )
+                verdict_emitted = True
             break
 
         if agent_out and agent_out.next_action.decision == "abort":
@@ -610,6 +657,24 @@ async def run_case_v2(
             break
 
     # ── Finalise ─────────────────────────────────────────────────────────────
+    # Safety net: if the loop ended without ever emitting a verdict (e.g. the
+    # forced-synthesis turn produced JSON that failed whole-AgentOutput
+    # validation, or was truncated), harvest one now so the rail always
+    # populates. harvest_verdict salvages the verdict block from the last
+    # response text and backfills MITRE/SPL from accumulated state. An explicit
+    # abort is left alone — terminated_reason stays unchanged either way.
+    if on_event and not verdict_emitted and state.terminated_reason != "aborted":
+        on_event(
+            "verdict_reached",
+            _native_verdict_payload(
+                state,
+                None,
+                response_text,
+                "Investigation complete" if final_report else "Investigation incomplete",
+            ),
+        )
+        verdict_emitted = True
+
     if not final_report:
         final_report = (
             "Investigation incomplete — "

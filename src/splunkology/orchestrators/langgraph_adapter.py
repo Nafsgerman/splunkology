@@ -61,6 +61,25 @@ class AgentState(TypedDict):
     ground_truth_path: str | None
     on_event: object | None
     config: dict
+    force_synth: bool
+    synth_done: bool
+
+
+# FINAL-TURN synthesis nudge — mirrors the native loop's forced-synthesis turn
+# so LangGraph produces a structured verdict instead of silently hitting
+# max_iterations with an empty rail.
+_SYNTH_MESSAGE = (
+    "FINAL TURN. No tools are available and no more searches will run. "
+    "Do not ask for more searches. Conclude now from the evidence you have.\n\n"
+    "Write the incident report under '## Executive Summary' and the other "
+    "required headers, then append the JSON block. In that JSON: set findings "
+    "to [], set next_action.decision to 'verdict', set "
+    "verdict.supporting_finding_ids to [], set verdict.confidence to a float "
+    "between 0.30 and 1.00, and populate verdict.claim, verdict.reasoning, "
+    "verdict.mitre_techniques (objects with technique_id and technique_name), "
+    "and verdict.spl_evidence (objects each with an 'spl' field naming a search "
+    "you ran)."
+)
 
 
 # ── Nodes ─────────────────────────────────────────────────────────────────────
@@ -78,17 +97,20 @@ def think_node(state: AgentState) -> dict:
 
     import time as _time
 
+    _create_kwargs = {
+        "model": state["model"],
+        "max_tokens": 8192,
+        "system": state["system_prompt"],
+        "messages": clean_messages,
+        "temperature": 0,
+    }
+    if not state.get("force_synth"):
+        _create_kwargs["tools"] = TOOL_SCHEMAS
+
     response = None
     for _retry in range(3):
         try:
-            response = client.messages.create(
-                model=state["model"],
-                max_tokens=8192,
-                system=state["system_prompt"],
-                tools=TOOL_SCHEMAS,
-                messages=clean_messages,
-                temperature=0,
-            )
+            response = client.messages.create(**_create_kwargs)
             break
         except anthropic.APIStatusError as _e:
             if _e.status_code == 529 and _retry < 2:
@@ -143,9 +165,6 @@ def think_node(state: AgentState) -> dict:
 
 
 def tool_router(state: AgentState) -> str:
-    if state["iter_count"] >= state["max_iter"]:
-        return "end"
-
     last = state["messages"][-1]
     response = last.get("_response") if isinstance(last, dict) else None
 
@@ -161,18 +180,37 @@ def tool_router(state: AgentState) -> str:
     if "## Executive Summary" in text and len(text) > 1500:
         return "end"
 
-    if tool_calls:
-        return "tool_node"
-
     if is_v2_response(text):
         agent_out, _ = parse_agent_output(text)
         if agent_out and agent_out.next_action.decision in ("verdict", "abort"):
             return "end"
 
+    # Force one tool-less synthesis turn before we run out of iterations so the
+    # graph always produces a verdict (parity with the native loop). The
+    # synthesis turn already ran if synth_done is set — end then.
+    if state["iter_count"] >= state["max_iter"] - 1 and not state.get("final_report"):
+        if not state.get("synth_done"):
+            return "synthesize"
+        return "end"
+
+    if state["iter_count"] >= state["max_iter"]:
+        return "end"
+
+    if tool_calls:
+        return "tool_node"
+
     if response and response.stop_reason == "end_turn" and not tool_calls:
         return "nudge"
 
     return "observe_node"
+
+
+def synthesize_node(state: AgentState) -> dict:
+    return {
+        "messages": state["messages"] + [{"role": "user", "content": _SYNTH_MESSAGE}],
+        "force_synth": True,
+        "synth_done": True,
+    }
 
 
 async def tool_node(state: AgentState) -> dict:
@@ -222,11 +260,11 @@ async def tool_node(state: AgentState) -> dict:
             on_event(
                 "tool_call_end",
                 {
-                    "tool": tool_name,
-                    "outcome": outcome,
-                    "summary": summary,
-                    "findings_count": len(all_findings),
-                    "duration_ms": duration_ms,
+                    "tool": tool_call.name,
+                    "outcome": result.outcome.value,
+                    "summary": result.summary,
+                    "findings_count": len(state["all_findings"]),
+                    "duration_ms": result.duration_ms,
                 },
             )
 
@@ -365,6 +403,7 @@ def build_graph() -> StateGraph:
     g.add_node("tool_node", tool_node)
     g.add_node("observe_node", observe_node)
     g.add_node("nudge_node", nudge_node)
+    g.add_node("synthesize_node", synthesize_node)
     g.set_entry_point("think_node")
     g.add_conditional_edges(
         "think_node",
@@ -373,13 +412,53 @@ def build_graph() -> StateGraph:
             "tool_node": "tool_node",
             "observe_node": "observe_node",
             "nudge": "nudge_node",
+            "synthesize": "synthesize_node",
             "end": END,
         },
     )
     g.add_edge("tool_node", "observe_node")
     g.add_edge("observe_node", "think_node")
     g.add_edge("nudge_node", "think_node")
+    g.add_edge("synthesize_node", "think_node")
     return g.compile()
+
+
+def _last_assistant_text(messages: list) -> str:
+    """Concatenated text of the most recent assistant turn (for verdict harvest)."""
+    for m in reversed(messages or []):
+        if isinstance(m, dict) and m.get("role") == "assistant":
+            content = m.get("content")
+            if isinstance(content, str):
+                return content
+            text = ""
+            for block in content or []:
+                if hasattr(block, "type") and block.type == "text":
+                    text += block.text
+            return text
+    return ""
+
+
+def _langgraph_verdict_payload(run_id: str, final_state: dict) -> dict:
+    """Build a verdict_reached payload that always carries a structured verdict."""
+    from splunkology.agent.verdict_bridge import harvest_verdict
+
+    findings = final_state.get("all_findings") or []
+    text = _last_assistant_text(final_state.get("messages") or [])
+    has_report = bool(final_state.get("final_report"))
+    claim_fallback = "Investigation complete" if has_report else "Investigation incomplete"
+    verdict = harvest_verdict(
+        findings=findings,
+        parsed_text=text,
+        claim_fallback=claim_fallback,
+    )
+    return {
+        "run_id": run_id,
+        "claim": verdict.get("claim") or claim_fallback,
+        "confidence": verdict.get("confidence"),
+        "findings_count": len(findings),
+        "total_cost_usd": final_state.get("cumulative_cost_usd", 0.0),
+        "verdict": verdict,
+    }
 
 
 # ── Public entry point ────────────────────────────────────────────────────────
@@ -457,6 +536,8 @@ async def run_case_langgraph(
         "ground_truth_path": ground_truth_path,
         "on_event": on_event,
         "config": config,
+        "force_synth": False,
+        "synth_done": False,
     }
 
     if on_event:
@@ -474,7 +555,10 @@ async def run_case_langgraph(
     final_state: dict = initial_state
     terminated_reason = "error"
     try:
-        final_state = await graph.ainvoke(initial_state)
+        final_state = await graph.ainvoke(
+            initial_state,
+            config={"recursion_limit": max_iter * 4 + 10},
+        )
         final_report = final_state.get("final_report") or (
             f"Investigation incomplete — max_iterations after "
             f"{final_state['iter_count']} iterations."
@@ -482,6 +566,11 @@ async def run_case_langgraph(
         terminated_reason = (
             "verdict_reached" if final_state.get("final_report") else "max_iterations"
         )
+        if on_event:
+            on_event(
+                "verdict_reached",
+                _langgraph_verdict_payload(run_id, final_state),
+            )
     except Exception as e:
         logger.exception("LangGraph run failed: %s", e)
         final_report = f"Investigation aborted due to error: {e}"

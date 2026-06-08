@@ -307,7 +307,7 @@ body{
 <div class="ioc-tip" id="tooltip"></div>
 
 <script>
-const state={running:false,startedAt:null,timerId:null,iter:0,spl:0,find:0,ent:0,toolTimes:[],sessionId:null,caseId:null,reportReady:false,verdictRendered:false,mitre:new Set()};
+const state={running:false,startedAt:null,timerId:null,iter:0,spl:0,find:0,ent:0,toolTimes:[],sessionId:null,caseId:null,reportReady:false,verdictRendered:false,mitre:new Set(),watchdog:null,lastEventAt:0};
 const ORCH_LABELS={native:'Native Claude (Sonnet 4.5)',haiku:'Native (Haiku 4.5)','openai-fc':'OpenAI FC (gpt-5.5)',langgraph:'LangGraph (Sonnet 4.5)',gemini:'Gemini 3 Pro',claudecode:'Claude Code (headless)'};
 
 function setStatus(s,t){const el=document.getElementById('hdr-status');el.className='hdr-status '+s;document.getElementById('hdr-status-txt').textContent=t;}
@@ -386,7 +386,20 @@ async function launch(){
     if(!r.ok)throw new Error('backend '+r.status);
     const {session_id}=await r.json(); state.sessionId=session_id;
     const es=new EventSource('/api/stream/'+session_id);
+    const WATCHDOG_MS=180000;
+    function clearWatchdog(){ if(state.watchdog){clearInterval(state.watchdog);state.watchdog=null;} }
+    function stopRun(){ clearWatchdog(); es.close(); state.running=false; stopTimer(); }
+    state.lastEventAt=Date.now();
+    clearWatchdog();
+    state.watchdog=setInterval(function(){
+      if(!state.running){clearWatchdog();return;}
+      if(Date.now()-state.lastEventAt>WATCHDOG_MS){
+        addEvent('find','Run timed out','No activity for '+(WATCHDOG_MS/1000)+'s — marking run as errored');
+        setStatus('error','Error'); stopRun();
+      }
+    },5000);
     es.onmessage=function(e){
+      state.lastEventAt=Date.now();
       const ev=JSON.parse(e.data);
       switch(ev.type){
         case 'start': addEvent('log','Investigation started','Case '+esc(ev.case_id||caseId)+' · agent forming initial hypothesis'); break;
@@ -407,12 +420,12 @@ async function launch(){
         case 'verdict':
         case 'verdict_reached': { if(!state.verdictRendered){ state.verdictRendered=true; if(ev.verdict){ renderVerdict(ev.verdict); } addEvent('done','Verdict reached',esc((ev.verdict&&ev.verdict.claim)||ev.claim||'')); state.reportReady=true; } break; }
         case 'report': { state.reportReady=true; break; }
-        case 'complete': addEvent('done','Triage complete','Investigation finalized · audit log sealed'); setStatus('complete','Complete'); es.close(); state.running=false; stopTimer(); break;
-        case 'error': addEvent('find','Error',esc(ev.message||'unknown error')); setStatus('error','Error'); es.close(); state.running=false; stopTimer(); break;
+        case 'complete': addEvent('done','Triage complete','Investigation finalized · audit log sealed'); setStatus('complete','Complete'); stopRun(); break;
+        case 'error': addEvent('find','Error',esc(ev.message||'unknown error')); setStatus('error','Error'); stopRun(); break;
       }
     };
-    es.onerror=function(){ es.close(); if(!state.reportReady){addEvent('log','Stream disconnected','');setStatus('error','Error');} state.running=false; stopTimer(); };
-  }catch(e){ addEvent('find','Backend error',esc(e.message)); setStatus('error','Error'); state.running=false; stopTimer(); }
+    es.onerror=function(){ clearWatchdog(); es.close(); if(!state.reportReady){addEvent('log','Stream disconnected','');setStatus('error','Error');} state.running=false; stopTimer(); };
+  }catch(e){ if(state.watchdog){clearInterval(state.watchdog);state.watchdog=null;} addEvent('find','Backend error',esc(e.message)); setStatus('error','Error'); state.running=false; stopTimer(); }
 }
 
 let iocInited=false,iocNodes=[],iocLinks=[],iocSim=null,iocLinkSel=null,iocNodeSel=null,iocG=null,iocW=900,iocH=500;
@@ -450,10 +463,11 @@ function addGraphNode(type,value){
   if(!value)return; let s=typeof value==='string'?value:(value&&(value.id||value.value||value.name))||String(value); if(!s)return;
   const id=s.slice(0,60); const t=(type||'other').toLowerCase();
   if(iocNodes.find(n=>n.id===id))return;
-  if(t==='mitre'){const a=[...iocNodes].reverse().find(n=>n.type==='process'||n.type==='ip');if(a)iocLinks.push({source:a.id,target:id});}
-  else if(t==='ip'){const a=[...iocNodes].reverse().find(n=>n.type==='process');if(a)iocLinks.push({source:a.id,target:id});}
+  const anchor=()=>[...iocNodes].reverse().find(n=>n.type==='process')||[...iocNodes].reverse().find(n=>n.type==='ip')||iocNodes[0];
+  if(t==='mitre'){const a=anchor();if(a&&a.id!==id)iocLinks.push({source:a.id,target:id});}
+  else if(t==='ip'){const a=[...iocNodes].reverse().find(n=>n.type==='process'||n.type==='ip');if(a&&a.id!==id)iocLinks.push({source:a.id,target:id});}
   else if(t==='process'){const f=iocNodes.find(n=>n.type==='process');if(f&&f.id!==id)iocLinks.push({source:f.id,target:id});}
-  else{const a=[...iocNodes].reverse().find(n=>n.type==='process');if(a)iocLinks.push({source:a.id,target:id});}
+  else{const a=anchor();if(a&&a.id!==id)iocLinks.push({source:a.id,target:id});}
   iocNodes.push({id,type:t});
   if(iocInited)iocUpdate();
 }

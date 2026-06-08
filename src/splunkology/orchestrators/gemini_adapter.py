@@ -6,6 +6,7 @@ Uses Google Gemini API with function calling via google-genai SDK.
 
 from __future__ import annotations
 
+import contextlib
 import json
 import logging
 import os
@@ -70,6 +71,36 @@ def _to_gemini_tools() -> list:
 GEMINI_TOOLS = _to_gemini_tools()
 
 
+def _safe_close_genai(client: Any) -> None:
+    """Defuse google-genai's GC-time async teardown.
+
+    On Python 3.14 the SDK's ``BaseApiClient.__del__`` schedules ``aclose()`` on
+    the running event loop. That coroutine can raise
+    ``AttributeError: 'BaseApiClient' object has no attribute
+    '_async_httpx_client'`` (a google-genai / httpx incompatibility), and because
+    it runs as a detached task it escapes the adapter's try/except — leaving the
+    dashboard stuck on "Running" because the ``complete`` event never fires.
+
+    We close the client synchronously and replace the async teardown with a
+    no-op so the finalizer cannot raise on the loop. This is the
+    lifecycle-guard fix (preferred over pinning the SDK, which is environment
+    -wide and brittle on 3.14).
+    """
+    api = getattr(client, "_api_client", None)
+    if api is not None:
+        if not hasattr(api, "_async_httpx_client"):
+            with contextlib.suppress(Exception):
+                api._async_httpx_client = None
+
+        async def _noop_aclose() -> None:
+            return None
+
+        with contextlib.suppress(Exception):
+            api.aclose = _noop_aclose
+    with contextlib.suppress(Exception):
+        client.close()
+
+
 async def run_case_gemini(
     case_id: str,
     evidence_files: dict[str, str],
@@ -110,7 +141,38 @@ async def run_case_gemini(
 
     audit = AuditLog(db_path=audit_db)
     client = genai.Client(api_key=os.environ["GEMINI_API_KEY"])
+    try:
+        return await _run_gemini_loop(
+            client=client,
+            run_id=run_id,
+            case_id=case_id,
+            evidence_files=evidence_files,
+            briefing=briefing,
+            model=model,
+            max_iter=max_iter,
+            system_prompt=system_prompt,
+            snap=snap,
+            audit=audit,
+            on_event=on_event,
+        )
+    finally:
+        _safe_close_genai(client)
 
+
+async def _run_gemini_loop(
+    *,
+    client: Any,
+    run_id: str,
+    case_id: str,
+    evidence_files: dict[str, str],
+    briefing: str,
+    model: str,
+    max_iter: int,
+    system_prompt: str,
+    snap: Any,
+    audit: Any,
+    on_event: Callable[..., Any] | None,
+) -> tuple[str, str]:
     evidence_summary = "\n".join(f"- {k}: {v}" for k, v in evidence_files.items())
     initial_text = (
         f"## Case ID: {case_id}\n\n"

@@ -35,11 +35,62 @@ from splunkology.agent.loop_v2 import (
     _synthesize_v1_fallback,
 )
 from splunkology.agent.output_schema import AgentOutput, NextAction
-from splunkology.agent.output_validator import is_v2_response, parse_agent_output
+from splunkology.agent.output_validator import (
+    extract_json_block,
+    is_v2_response,
+    parse_agent_output,
+)
 from splunkology.agent.prompts import load_prompt
+from splunkology.agent.verdict_bridge import harvest_verdict
 from splunkology.audit.log import AuditLog
 
 logger = logging.getLogger(__name__)
+
+
+def _loose_verdict_from_text(text: str) -> dict | None:
+    """Best-effort verdict dict from GPT output even when it fails the v2 schema.
+
+    GPT frequently emits a verdict in a non-v2 shape (string/verbal confidence,
+    ``attck_mapping`` instead of ``mitre_techniques``, ``verdict`` as a bare
+    string). We pull whatever JSON we can and hand the raw shape to the
+    dashboard's ``_coerce_verdict``, which normalises it for the rail.
+    """
+    block = extract_json_block(text or "")
+    if not block:
+        return None
+    try:
+        raw = json.loads(block)
+    except (json.JSONDecodeError, ValueError):
+        return None
+    if not isinstance(raw, dict):
+        return None
+
+    nested = raw.get("verdict")
+    if isinstance(nested, dict):
+        return nested
+
+    merged: dict = {}
+    if isinstance(nested, str):
+        merged["claim"] = nested
+    for key in (
+        "claim",
+        "summary",
+        "conclusion",
+        "confidence",
+        "mitre_techniques",
+        "attck_mapping",
+        "attack_mapping",
+        "mitre",
+        "attack",
+        "techniques",
+        "spl_evidence",
+        "spl",
+        "searches",
+    ):
+        if key in raw and key not in merged:
+            merged[key] = raw[key]
+    return merged or None
+
 
 # ── Tool schema conversion ────────────────────────────────────────────────────
 # Anthropic: {name, description, input_schema: {type, properties, required}}
@@ -140,6 +191,34 @@ async def run_case_openai_fc(
     final_report = ""
     terminated_reason = "max_iterations"
     iter_count = 0
+    verdict_emitted = False
+
+    def _emit_verdict(claim_fallback: str, text: str, agent_out: AgentOutput | None) -> None:
+        nonlocal verdict_emitted
+        if verdict_emitted or not on_event:
+            verdict_emitted = True
+            return
+        if agent_out is not None and agent_out.verdict is not None:
+            verdict = agent_out.verdict.to_incident_verdict().model_dump()
+        else:
+            verdict = _loose_verdict_from_text(text)
+            if verdict is None:
+                verdict = harvest_verdict(
+                    findings=all_findings,
+                    claim_fallback=claim_fallback,
+                )
+        on_event(
+            "verdict_reached",
+            {
+                "run_id": run_id,
+                "claim": verdict.get("claim") or claim_fallback,
+                "confidence": verdict.get("confidence"),
+                "findings_count": len(all_findings),
+                "total_cost_usd": cumulative_cost_usd,
+                "verdict": verdict,
+            },
+        )
+        verdict_emitted = True
 
     while iter_count < max_iter:
         # ── API call ──────────────────────────────────────────────────────────
@@ -180,6 +259,7 @@ async def run_case_openai_fc(
         if "## Executive Summary" in text and len(text) > 1500:
             final_report = text
             terminated_reason = "verdict_reached"
+            _emit_verdict("Investigation complete (report-based exit)", text, None)
             break
 
         # ── Append assistant turn to history ──────────────────────────────────
@@ -236,11 +316,11 @@ async def run_case_openai_fc(
                     on_event(
                         "tool_call_end",
                         {
-                            "tool": tool_name,
-                            "outcome": outcome,
-                            "summary": summary,
+                            "tool": tc.function.name,
+                            "outcome": result.outcome.value,
+                            "summary": result.summary,
                             "findings_count": len(all_findings),
-                            "duration_ms": duration_ms,
+                            "duration_ms": result.duration_ms,
                         },
                     )
 
@@ -320,17 +400,11 @@ async def run_case_openai_fc(
         # ── Verdict / abort checks ─────────────────────────────────────────────
         if agent_out and agent_out.next_action.decision == "verdict":
             terminated_reason = "verdict_reached"
-            if on_event:
-                on_event(
-                    "verdict_reached",
-                    {
-                        "run_id": run_id,
-                        "claim": agent_out.verdict.claim if agent_out.verdict else "",
-                        "confidence": agent_out.verdict.confidence if agent_out.verdict else None,
-                        "findings_count": len(all_findings),
-                        "total_cost_usd": cumulative_cost_usd,
-                    },
-                )
+            _emit_verdict(
+                agent_out.verdict.claim if (agent_out.verdict) else "Investigation complete",
+                text,
+                agent_out,
+            )
             break
 
         if agent_out and agent_out.next_action.decision == "abort":
@@ -353,6 +427,13 @@ async def run_case_openai_fc(
             )
 
     # ── Finalise ──────────────────────────────────────────────────────────────
+    if not verdict_emitted and on_event:
+        _emit_verdict(
+            "Investigation complete" if final_report else "Investigation incomplete",
+            final_report,
+            None,
+        )
+
     if not final_report:
         final_report = (
             f"Investigation incomplete — {terminated_reason} after {iter_count} iterations."

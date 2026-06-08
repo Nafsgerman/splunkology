@@ -43,8 +43,85 @@ async def push_event(session_id: str, event: dict) -> None:
     await queue.put(event)
 
 
+# Verbal confidence buckets emitted by some models (e.g. GPT: "medium_high").
+_VERBAL_CONFIDENCE = {
+    "very_low": 0.1,
+    "low": 0.3,
+    "medium_low": 0.4,
+    "medium": 0.5,
+    "moderate": 0.5,
+    "medium_high": 0.7,
+    "high": 0.8,
+    "very_high": 0.9,
+    "critical": 0.95,
+    "certain": 0.99,
+}
+
+
+def _normalize_confidence(c):
+    """Coerce a numeric, percentage, or verbal confidence into a 0..1 float."""
+    if c is None or isinstance(c, bool):
+        return None
+    if isinstance(c, int | float):
+        f = float(c)
+        return f / 100.0 if f > 1.0 else f
+    if isinstance(c, str):
+        s = c.strip().lower().replace("-", "_").replace(" ", "_")
+        if s in _VERBAL_CONFIDENCE:
+            return _VERBAL_CONFIDENCE[s]
+        try:
+            f = float(c.strip().rstrip("%"))
+        except ValueError:
+            return None
+        return f / 100.0 if f > 1.0 else f
+    return None
+
+
+def _normalize_mitre(items):
+    """Coerce MITRE entries (strings or dicts, various key names) into the rail shape."""
+    out = []
+    for it in items or []:
+        if isinstance(it, str):
+            tid = it.strip()
+            if tid:
+                out.append({"technique_id": tid, "technique_name": ""})
+        elif isinstance(it, dict):
+            tid = (
+                it.get("technique_id")
+                or it.get("id")
+                or it.get("technique")
+                or it.get("value")
+                or ""
+            )
+            if tid:
+                out.append(
+                    {
+                        "technique_id": tid,
+                        "technique_name": it.get("technique_name") or it.get("name") or "",
+                        "confidence": it.get("confidence"),
+                    }
+                )
+    return out
+
+
+def _normalize_spl(items):
+    out = []
+    for it in items or []:
+        if isinstance(it, str):
+            if it.strip():
+                out.append({"spl": it})
+        elif isinstance(it, dict):
+            out.append(it)
+    return out
+
+
 def _coerce_verdict(v):
-    """Normalize any verdict payload into the IncidentVerdict.model_dump() shape renderVerdict expects."""
+    """Normalize any verdict payload into the IncidentVerdict.model_dump() shape renderVerdict expects.
+
+    Tolerant of alternate shapes emitted by non-native models (GPT et al.):
+    string/verbal confidence, ``attck_mapping``/``mitre``/``techniques`` instead
+    of ``mitre_techniques``, and ``verdict`` carried as a bare string.
+    """
     if v is None:
         return None
     if hasattr(v, "model_dump"):
@@ -59,10 +136,28 @@ def _coerce_verdict(v):
         else:
             return {"claim": v, "confidence": None, "mitre_techniques": [], "spl_evidence": []}
     if isinstance(v, dict):
+        v = dict(v)
+        if not v.get("claim"):
+            for _k in ("verdict", "summary", "conclusion", "iteration_summary"):
+                _cand = v.get(_k)
+                if isinstance(_cand, str) and _cand.strip():
+                    v["claim"] = _cand
+                    break
         v.setdefault("claim", "—")
-        v.setdefault("confidence", None)
-        v.setdefault("mitre_techniques", [])
-        v.setdefault("spl_evidence", [])
+        v["confidence"] = _normalize_confidence(v.get("confidence"))
+        _mitre = v.get("mitre_techniques")
+        if not _mitre:
+            for _k in ("attck_mapping", "attack_mapping", "mitre", "attack", "techniques"):
+                if v.get(_k):
+                    _mitre = v.get(_k)
+                    break
+        v["mitre_techniques"] = _normalize_mitre(_mitre)
+        v["spl_evidence"] = _normalize_spl(
+            v.get("spl_evidence")
+            or v.get("spl")
+            or v.get("searches")
+            or v.get("key_evidence_excerpts")
+        )
         return v
     return {"claim": str(v), "confidence": None, "mitre_techniques": [], "spl_evidence": []}
 
@@ -78,24 +173,19 @@ async def dashboard():
 async def stream(session_id: str, request: Request):
     gen_id = str(uuid.uuid4())
     _stream_gen[session_id] = gen_id
-    fresh_queue: asyncio.Queue = asyncio.Queue()
-    _queues[session_id] = fresh_queue
+    _, queue = get_or_create_session(session_id)
 
     async def event_generator() -> AsyncGenerator[str, None]:
-        queue = fresh_queue
-        get_or_create_session(session_id)
-        for event in _sessions.get(session_id, []):
-            if _stream_gen.get(session_id) != gen_id:
-                return
-            yield f"data: {json.dumps(event)}\n\n"
+        sent = 0
         while True:
             if _stream_gen.get(session_id) != gen_id:
                 return
-            if await request.is_disconnected():
-                break
+            history = _sessions.get(session_id, [])
+            while sent < len(history):
+                yield f"data: {json.dumps(history[sent])}\n\n"
+                sent += 1
             try:
-                event = await asyncio.wait_for(queue.get(), timeout=1.0)
-                yield f"data: {json.dumps(event)}\n\n"
+                await asyncio.wait_for(queue.get(), timeout=1.0)
             except TimeoutError:
                 yield ": keepalive\n\n"
 
@@ -211,8 +301,33 @@ async def _run_investigation(
         if on_loop:
             _emit()
         else:
-            with contextlib.suppress(Exception):
-                _main_loop.call_soon_threadsafe(_emit)
+
+            def _emit_or_report():
+                try:
+                    _emit()
+                except Exception as exc:
+                    events, queue = get_or_create_session(session_id)
+                    err = {
+                        "type": "error",
+                        "message": f"emit failed: {exc!r}",
+                        "timestamp": datetime.now(UTC).isoformat(),
+                    }
+                    events.append(err)
+                    with contextlib.suppress(Exception):
+                        queue.put_nowait(err)
+
+            try:
+                _main_loop.call_soon_threadsafe(_emit_or_report)
+            except RuntimeError as exc:
+                events, queue = get_or_create_session(session_id)
+                err = {
+                    "type": "error",
+                    "message": f"loop dispatch failed: {exc!r}",
+                    "timestamp": datetime.now(UTC).isoformat(),
+                }
+                events.append(err)
+                with contextlib.suppress(Exception):
+                    queue.put_nowait(err)
 
     try:
         report = await run_case(
@@ -305,6 +420,21 @@ async def _run_investigation(
                             },
                         )
                         _ioc_emit_count += 1
+
+            for _host in report_dict.get("compromised_hosts") or []:
+                _hv = _host.get("src_ip") if isinstance(_host, dict) else str(_host)
+                if _hv:
+                    await push_event(
+                        session_id,
+                        {
+                            "type": "ioc",
+                            "ioc_type": "ip",
+                            "value": _hv,
+                            "evidence": [],
+                            "confirmed": True,
+                        },
+                    )
+                    _ioc_emit_count += 1
 
             # Always supplement with regex extraction if dict gave us nothing
             if _ioc_emit_count == 0:
@@ -409,7 +539,7 @@ async def _run_investigation(
             if report_dict and report_dict.get("verdict"):
                 await push_event(
                     session_id,
-                    {"type": "verdict", "verdict": _coerce_verdict(report_dict["verdict"])},
+                    {"type": "verdict", "verdict": _coerce_verdict(report_dict)},
                 )
 
             await push_event(
